@@ -5,11 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "live-server src --port=3000",
+    "dev": "live-server --port=3000",
     "prod": "NODE_ENV=production node server.js",
     "build": "echo 'Build step not defined'",
     "test": "echo 'No tests defined'",
-    "deploy": "gh-pages -d src"
+    "deploy": "gh-pages -d ."
   },
   "keywords": [
     "2D",
