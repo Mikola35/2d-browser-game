@@ -403,7 +403,7 @@ function drawCannon() {
     // Draw laser sight first (under the cannon)
     const lineLength = Math.max(canvas.width, canvas.height) * 2; // Достаточно длинная линия
     ctx.beginPath();
-    ctx.strokeStyle = colors[currentColorIndex] + '40'; // 25% opacity
+    ctx.strokeStyle = colors[currentColorIndex] + '20'; // Меняем с '40' на '20' (12.5% прозрачности)
     ctx.lineWidth = 2;
     ctx.moveTo(0, -baseHeight - barrelLength);
     ctx.lineTo(0, -lineLength);
