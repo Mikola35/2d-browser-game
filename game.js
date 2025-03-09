@@ -486,14 +486,16 @@ function initializeGame() {
         }
     });
 
-    // Заменяем обработчик клика, добавляя проверку на ссылку
+    // Заменяем обработчик клика
     window.addEventListener('click', (e) => {
-        // Проверяем, не является ли цель клика ссылкой
-        if (e.target.tagName !== 'A') {
-            e.preventDefault();
-            if (e.button === 0) { // Левая кнопка мыши
-                changeColor('left');
-            }
+        // Если клик был по ссылке, не делаем ничего
+        if (e.target.tagName === 'A') {
+            return;
+        }
+        
+        e.preventDefault();
+        if (e.button === 0) { // Левая кнопка мыши
+            changeColor('left');
         }
     });
 
