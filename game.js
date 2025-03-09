@@ -427,19 +427,26 @@ function drawCannon() {
     const baseHeight = 40;
     const barrelLength = 60;
     const barrelWidth = 20;
+    const baseRadius = 55; // Радиус круглого основания
     
     ctx.save();
     ctx.translate(cannonX, cannonY);
     ctx.rotate(angle);
     
     // Draw laser sight first (under the cannon)
-    const lineLength = Math.max(canvas.width, canvas.height) * 2; // Достаточно длинная линия
+    const lineLength = Math.max(canvas.width, canvas.height) * 2;
     ctx.beginPath();
-    ctx.strokeStyle = colors[currentColorIndex] + '20'; // Меняем с '40' на '20' (12.5% прозрачности)
+    ctx.strokeStyle = colors[currentColorIndex] + '20';
     ctx.lineWidth = 2;
     ctx.moveTo(0, -baseHeight - barrelLength);
     ctx.lineTo(0, -lineLength);
     ctx.stroke();
+    
+    // Draw circular base
+    ctx.fillStyle = '#666';
+    ctx.beginPath();
+    ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
+    ctx.fill();
     
     // Draw base
     ctx.fillStyle = '#888';
@@ -461,7 +468,7 @@ function drawCannon() {
     ctx.closePath();
     ctx.fill();
     
-    // Рисуем круг дальности до остальной отрисовки пушки
+    // Draw auto-fire range if enabled
     if (isAutoFireEnabled && isTrainingMode) {
         const percent = parseInt(autoFireDistance.value) / 100;
         const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
