@@ -1,6 +1,19 @@
 // Добавим в начало файла переменную режима
 let isTrainingMode = false;
 
+// В начале файла добавляем новые переменные
+const autoFireBtn = document.getElementById('autoFireBtn');
+let isAutoFireEnabled = false;
+
+// В начало файла добавляем переменные
+const autoFireRange = document.getElementById('autoFireRange');
+const autoFireDistance = document.getElementById('autoFireDistance');
+const autoFireDistanceValue = document.getElementById('autoFireDistanceValue');
+let autoFireMaxDistance = 0; // Теперь это будет вычисляемое значение
+
+// В начале файла после других констант добавляем:
+let isManualControl = true;
+
 // Get DOM elements
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -18,6 +31,19 @@ const howToPlayBtn = document.getElementById('howToPlayBtn');
 const instructionsScreen = document.getElementById('instructionsScreen');
 const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
 let isPaused = false;
+
+// Добавляем после других переменных состояния игры
+let patrolAngle = 0;
+let patrolDirection = 1;
+const PATROL_SPEED = 0.0005; // Снижаем скорость патрулирования
+const PATROL_RANGE = Math.PI / 6; // Уменьшаем диапазон до 30 градусов
+
+// Добавляем после других переменных состояния игры
+let targetAngle = 0; // Целевой угол для плавного поворота
+const ROTATION_SPEED = 0.05; // Уменьшаем скорость поворота
+
+// Добавляем после других переменных состояния игры
+let basePatrolAngle = 0; // Базовый угол для патрулирования
 
 // Game state variables
 let enemies = [];
@@ -435,6 +461,31 @@ function drawCannon() {
     ctx.closePath();
     ctx.fill();
     
+    // Рисуем круг дальности до остальной отрисовки пушки
+    if (isAutoFireEnabled && isTrainingMode) {
+        const percent = parseInt(autoFireDistance.value) / 100;
+        const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
+        
+        ctx.save();
+        ctx.resetTransform();
+        
+        // Создаем радиальный градиент
+        const gradient = ctx.createRadialGradient(
+            cannonX, cannonY, DEFENSE_RADIUS, // Внутренний круг
+            cannonX, cannonY, maxRange        // Внешний круг
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+        
+        // Рисуем заполненный круг с градиентом
+        ctx.beginPath();
+        ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        ctx.restore();
+    }
+    
     ctx.restore();
 }
 
@@ -452,9 +503,12 @@ function initializeGame() {
     
     // Event listeners
     window.addEventListener('mousemove', (e) => {
-        const dx = e.clientX - cannonX;
-        const dy = cannonY - e.clientY;
-        angle = -Math.atan2(dy, dx) + Math.PI/2;
+        if (!isAutoFireEnabled || !isTrainingMode) {
+            const dx = e.clientX - cannonX;
+            const dy = cannonY - e.clientY;
+            angle = -Math.atan2(dy, dx) + Math.PI/2;
+            isManualControl = true;
+        }
     });
     
     // Удаляем старые обработчики mousedown и mouseup
@@ -462,24 +516,24 @@ function initializeGame() {
     // Обновляем обработчик колесика
     window.addEventListener('wheel', (e) => {
         e.preventDefault();
+        // Если включен автоогонь, игнорируем прокрутку
+        if (isAutoFireEnabled && isTrainingMode) return;
+        
         const now = Date.now();
         const timeDelta = now - lastWheelTime;
         
-        // Рассчитываем скорость прокрутки
-        if (timeDelta < 200) { // Если прокрутка была недавно
+        if (timeDelta < 200) {
             wheelSpeed = Math.min(20, wheelSpeed + Math.abs(e.deltaY) / 100);
         } else {
             wheelSpeed = Math.abs(e.deltaY) / 100;
         }
 
-        // Сбрасываем скорость через некоторое время
         setTimeout(() => {
             wheelSpeed *= 0.5;
         }, 50);
 
         lastWheelTime = now;
         
-        // Стреляем количество раз пропорционально скорости
         const shots = Math.ceil(wheelSpeed);
         for(let i = 0; i < shots; i++) {
             shoot();
@@ -555,6 +609,32 @@ function initializeGame() {
             instructionsScreen.classList.add('hidden');
         }
     });
+
+    // Обновляем обработчик для кнопки автоматического огня
+    autoFireBtn.addEventListener('click', () => {
+        isAutoFireEnabled = !isAutoFireEnabled;
+        isManualControl = !isAutoFireEnabled;
+        autoFireBtn.classList.toggle('active');
+        autoFireRange.style.display = isAutoFireEnabled ? 'flex' : 'none';
+
+        // Инициализируем градиент при первом показе слайдера
+        if (isAutoFireEnabled) {
+            patrolAngle = 0;
+            patrolDirection = 1;
+            const value = autoFireDistance.value;
+            const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
+            autoFireDistance.style.background = gradient;
+        }
+    });
+
+    // Обновляем обработчик для слайдера
+    autoFireDistance.addEventListener('input', (e) => {
+        const value = e.target.value;
+        autoFireDistanceValue.textContent = `${value}%`;
+        // Обновляем градиент для Chrome
+        const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
+        e.target.style.background = gradient;
+    });
 }
 
 function startGame() {
@@ -569,9 +649,14 @@ function startGame() {
     activeEnemyColors = []; // Очищаем массив активных цветов
     if (isTrainingMode) {
         waveSelector.style.display = 'flex';
+        autoFireBtn.classList.remove('hidden');
+        autoFireRange.classList.remove('hidden');
+        autoFireRange.style.display = 'none'; // Изначально скрыт
         createWaveButtons();
     } else {
         waveSelector.style.display = 'none';
+        autoFireBtn.classList.add('hidden');
+        autoFireRange.classList.add('hidden');
     }
     rings.forEach(ring => ring.active = true); // Восстанавливаем все кольца
     gameLoop();
@@ -660,6 +745,7 @@ function gameLoop() {
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
+            handleAutoFire(); // Добавляем перед обновлением состояния игры
             const currentTime = Date.now();
             // Изменяем условие спавна врагов
             if((currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
@@ -783,4 +869,74 @@ function createWaveButtons() {
         };
         waveSelector.appendChild(button);
     });
+}
+
+// Обновляем функцию handleAutoFire
+function handleAutoFire() {
+    if (!isAutoFireEnabled || !isTrainingMode) return;
+
+    const now = Date.now();
+    if (now - lastShot < 100) return;
+
+    // Находим ближайшего врага
+    let closestEnemy = null;
+    let minDistance = Infinity;
+
+    enemies.forEach(enemy => {
+        const dx = enemy.x - cannonX;
+        const dy = enemy.y - cannonY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestEnemy = enemy;
+        }
+    });
+
+    // Рассчитываем максимальную дистанцию
+    const percent = parseInt(autoFireDistance.value) / 100;
+    const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
+
+    if (closestEnemy && minDistance < maxRange) {
+        const enemyColorIndex = colors.indexOf(closestEnemy.color);
+        if (enemyColorIndex !== currentColorIndex) {
+            currentColorIndex = enemyColorIndex;
+            updateColorPanel();
+        }
+
+        const dx = closestEnemy.x - cannonX;
+        const dy = cannonY - closestEnemy.y;
+        targetAngle = -Math.atan2(dy, dx) + Math.PI/2;
+        
+        // Запоминаем текущий угол как базовый для патрулирования
+        basePatrolAngle = angle;
+    } else {
+        // Плавное патрулирование с использованием косинуса
+        targetAngle = basePatrolAngle + Math.cos(Date.now() * PATROL_SPEED) * PATROL_RANGE;
+    }
+
+    // Плавный поворот к цели
+    smoothRotateToTarget();
+
+    // Стреляем только если пушка направлена на цель и есть враг
+    if (closestEnemy && minDistance < maxRange && Math.abs(targetAngle - angle) < 0.1) {
+        shoot();
+    }
+}
+
+function smoothRotateToTarget() {
+    let angleDiff = targetAngle - angle;
+    
+    // Нормализуем разницу углов
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    
+    // Добавляем плавное замедление при приближении к цели
+    const rotationAmount = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), ROTATION_SPEED);
+    
+    angle += rotationAmount;
+    
+    // Нормализуем итоговый угол
+    while (angle > Math.PI) angle -= Math.PI * 2;
+    while (angle < -Math.PI) angle += Math.PI * 2;
 }

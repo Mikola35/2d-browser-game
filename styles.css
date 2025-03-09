@@ -125,11 +125,12 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid white;
-    border-radius: 5px;
+    border-radius: 25px; /* Максимальное закругление для других кнопок */
     cursor: pointer;
     transition: all 0.3s;
     z-index: 100;
     display: none;
+    height: 43px; /* Стандартизируем высоту */
 }
 
 #pauseBtn:hover {
@@ -196,11 +197,12 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid white;
-    border-radius: 5px;
+    border-radius: 25px; /* Максимальное закругление для других кнопок */
     cursor: pointer;
     transition: all 0.3s;
     z-index: 100;
     display: none;
+    height: 43px; /* Стандартизируем высоту */
 }
 
 #homeBtn:hover {
@@ -304,4 +306,112 @@ canvas {
 #authorLink:hover {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: underline;
+}
+
+#autoFireBtn {
+    position: fixed;
+    top: 20px;
+    right: 180px;
+    height: 43px; /* Высота как у соседних кнопок */
+    padding: 0 20px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 25px; /* Максимальное закругление */
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    min-width: 180px; /* Минимальная ширина для слайдера */
+}
+
+#autoFireBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#autoFireBtn.active {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#autoFireRange {
+    position: fixed;
+    top: 70px;
+    right: 180px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 15px;
+    z-index: 100;
+    display: none; /* Изначально скрыт */
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 180px; /* Соответствует ширине кнопки */
+    transform: translateX(50%); /* Центрируем относительно кнопки */
+    right: 270px; /* Выравниваем под кнопкой */
+}
+
+#autoFireDistance {
+    width: 100%;
+    cursor: pointer;
+    margin: 0;
+    height: 8px; /* Уменьшаем с 16px до 8px */
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px; /* Уменьшаем радиус с 8px до 4px */
+}
+
+/* Стили для Chrome/Safari/Opera */
+#autoFireDistance::-webkit-slider-runnable-track {
+    height: 8px; /* Уменьшаем с 16px до 8px */
+    border-radius: 4px; /* Уменьшаем радиус с 8px до 4px */
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#autoFireDistance::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -4px; /* Центрируем ползунок относительно трека */
+}
+
+/* Стили для Firefox */
+#autoFireDistance::-moz-range-track {
+    height: 8px; /* Уменьшаем с 16px до 8px */
+    border-radius: 4px; /* Уменьшаем радиус с 8px до 4px */
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#autoFireDistance::-moz-range-progress {
+    height: 8px; /* Уменьшаем с 16px до 8px */
+    border-radius: 4px; /* Уменьшаем радиус с 8px до 4px */
+    background: rgba(255, 255, 255, 1); /* Поменяли на полностью белый цвет */
+}
+
+#autoFireDistance::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Стили для активного состояния */
+#autoFireDistance:active::-webkit-slider-thumb {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#autoFireDistance:active::-moz-range-thumb {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#autoFireDistanceValue {
+    color: white;
+    font-size: 14px;
 }
