@@ -206,3 +206,102 @@ canvas {
 #homeBtn:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+#howToPlayBtn {
+    padding: 10px 20px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 10px;
+    width: 30%;
+    min-width: 150px;
+    max-width: 300px;
+}
+
+#howToPlayBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#instructionsScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95); /* Сделали фон темнее */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.instructions-content {
+    background: rgba(20, 20, 20, 0.95); /* Сделали фон контента темнее и менее прозрачным */
+    padding: 40px;
+    border-radius: 10px;
+    max-width: 600px;
+    color: white;
+    text-align: left;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Добавили тень для лучшего контраста */
+}
+
+.instructions-content h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 32px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.instructions-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+.instructions-content li {
+    margin: 15px 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#closeInstructionsBtn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 20px;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#closeInstructionsBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.hidden {
+    display: none !important;
+}
+
+#authorLink {
+    position: absolute;
+    bottom: 20px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.3s;
+    letter-spacing: 0.5px;
+}
+
+#authorLink:hover {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: underline;
+}

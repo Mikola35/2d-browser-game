@@ -14,6 +14,9 @@ const pauseBtn = document.getElementById('pauseBtn');
 const pauseText = document.getElementById('pauseText');
 const waveSelector = document.getElementById('waveSelector');
 const homeBtn = document.getElementById('homeBtn');
+const howToPlayBtn = document.getElementById('howToPlayBtn');
+const instructionsScreen = document.getElementById('instructionsScreen');
+const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
 let isPaused = false;
 
 // Game state variables
@@ -303,7 +306,10 @@ class Enemy {
                 // Если все кольца уничтожены
                 if (!rings.some(ring => ring.active)) {
                     if (!isTrainingMode) {
-                        gameOver = true;
+                        // Добавляем задержку перед окончанием игры
+                        setTimeout(() => {
+                            gameOver = true;
+                        }, 1000); // 1 секунда на анимацию взрыва
                     }
                 }
                 
@@ -527,6 +533,22 @@ function initializeGame() {
 
     homeBtn.addEventListener('click', () => {
         location.reload(); // Перезагружаем страницу для возврата в главное меню
+    });
+
+    // Add instruction screen handlers
+    howToPlayBtn.addEventListener('click', () => {
+        instructionsScreen.classList.remove('hidden');
+    });
+
+    closeInstructionsBtn.addEventListener('click', () => {
+        instructionsScreen.classList.add('hidden');
+    });
+
+    // Закрытие по клику вне контента
+    instructionsScreen.addEventListener('click', (e) => {
+        if (e.target === instructionsScreen) {
+            instructionsScreen.classList.add('hidden');
+        }
     });
 }
 
