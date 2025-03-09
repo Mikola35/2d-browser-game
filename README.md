@@ -1,50 +1,43 @@
-# 2D Browser Game
+# Спектральный защитник
 
-## Overview
-This project is a 2D browser game developed using HTML5, CSS, and JavaScript. It is designed to be lightweight and easily accessible through modern web browsers.
+Браузерная игра, где игрок управляет цветной пушкой и защищается от приближающихся врагов разных цветов.
 
-## Project Structure
-```
-2d-browser-game
-├── src
-│   ├── assets
-│   │   ├── audio        # Contains audio files for sound effects and background music
-│   │   └── images       # Holds image files including sprites and backgrounds
-│   ├── css
-│   │   └── styles.css   # CSS styles for the game
-│   ├── js
-│   │   ├── game.js      # Main JavaScript file for game logic
-│   │   └── utils.js     # Utility functions for various tasks
-│   └── index.html       # Main HTML file for the game interface
-├── package.json          # npm configuration file
-└── README.md             # Project documentation
+## Геймплей
+
+- Уничтожайте врагов, стреляя в них лазером соответствующего цвета
+- Защищайте три кольца от приближающихся врагов
+- Пройдите 5 волн с увеличивающейся сложностью
+- Используйте колесико мыши для стрельбы
+- Переключайте цвета левой и правой кнопками мыши
+
+## Установка
+
+1. Клонируйте репозиторий:
+```bash
+git clone <url-репозитория>
 ```
 
-## Getting Started
+2. Установите зависимости:
+```bash
+npm install
+```
 
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, etc.)
-- Node.js and npm (for managing dependencies)
+3. Запустите игру:
+```bash
+npm start
+```
 
-### Installation
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```
-   cd 2d-browser-game
-   ```
-3. Install dependencies:
-   ```
-   npm install
-   ```
+## Технологии
 
-### Running the Game
-1. Open `src/index.html` in your web browser to start playing the game.
+- HTML5 Canvas для отрисовки
+- Vanilla JavaScript для логики
+- CSS для стилей и анимаций
 
-## Contributing
-Feel free to submit issues or pull requests if you have suggestions or improvements for the game.
+## Режимы игры
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+- **Обычный режим**: Пройдите все волны, защищая кольца
+- **Тренировочный режим**: Практикуйтесь без риска проиграть
+
+## Лицензия
+
+MIT License - подробности в файле [LICENSE](LICENSE)
