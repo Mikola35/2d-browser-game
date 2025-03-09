@@ -486,11 +486,14 @@ function initializeGame() {
         }
     });
 
-    // Добавляем обработчик левой кнопки мыши для смены цвета влево
+    // Заменяем обработчик клика, добавляя проверку на ссылку
     window.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (e.button === 0) { // Левая кнопка мыши
-            changeColor('left');
+        // Проверяем, не является ли цель клика ссылкой
+        if (e.target.tagName !== 'A') {
+            e.preventDefault();
+            if (e.button === 0) { // Левая кнопка мыши
+                changeColor('left');
+            }
         }
     });
 
