@@ -101,11 +101,11 @@ function getRandomActiveColor() {
 }
 
 const waves = [
-    {killsToNext: 1, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 15 врагов
-    {killsToNext: 2, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 25 врагов
-    {killsToNext: 3, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 35 врагов
-    {killsToNext: 4, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 45 врагов
-    {killsToNext: 5, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 55 врагов
+    {killsToNext: 10, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 10 врагов
+    {killsToNext: 10, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 10 врагов
+    {killsToNext: 10, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 10 врагов
+    {killsToNext: 10, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 10 врагов
+    {killsToNext: 10, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
