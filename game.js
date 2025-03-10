@@ -100,12 +100,19 @@ function getRandomActiveColor() {
         : colors[Math.floor(Math.random() * colors.length)];
 }
 
+/*
+Конфигурация волн:
+killsToNext - количество врагов, которых нужно убить для перехода на следующую волну
+count - максимальное количество врагов на экране одновременно
+speed - множитель скорости врагов (1.0 = базовая скорость)
+spawnRate - частота появления врагов в миллисекундах (чем меньше, тем чаще)
+*/
 const waves = [
-    {killsToNext: 10, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 10 врагов
-    {killsToNext: 10, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 10 врагов
-    {killsToNext: 10, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 10 врагов
-    {killsToNext: 10, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 10 врагов
-    {killsToNext: 10, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
+    {killsToNext: 10, count: 20, speed: 1, spawnRate: 100},   // Нужно убить 10 врагов
+    {killsToNext: 9, count: 30, speed: 1.5, spawnRate: 200}, // Нужно убить 10 врагов
+    {killsToNext: 7, count: 40, speed: 2, spawnRate: 300},   // Нужно убить 10 врагов
+    {killsToNext: 6, count: 50, speed: 2.5, spawnRate: 500}, // Нужно убить 10 врагов
+    {killsToNext: 5, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
@@ -334,8 +341,8 @@ class Enemy {
                 this.explode();
                 rings[i].active = false;
                 
-                // Если это последнее невидимое кольцо (пушка)
-                if (i === rings.length - 1) {
+                // Если это последнее невидимое кольцо (пушка) и не тренировочный режим
+                if (i === rings.length - 1 && !isTrainingMode) {
                     // Сразу создаем части пушки и отключаем отрисовку оригинальной пушки
                     gameOver = true;
                     const pieces = [
@@ -344,7 +351,6 @@ class Enemy {
                         new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'circle')
                     ];
                     cannonPieces.push(...pieces);
-                    
                     setTimeout(() => gameOver = true, 1500);
                 }
                 // Если все видимые кольца уничтожены, активируем последнее
