@@ -140,7 +140,7 @@ canvas {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 10px 20px;
+    padding: 0px 20px 0px 20px;
     font-size: 20px;
     background: rgba(255, 255, 255, 0.2);
     color: white;
@@ -212,7 +212,7 @@ canvas {
     position: fixed;
     top: 20px;
     right: 100px; /* Увеличили отступ с 90px до 100px для создания пространства 10px */
-    padding: 10px 20px;
+    padding: 0px 20px;
     font-size: 20px;
     background: rgba(255, 255, 255, 0.2);
     color: white;

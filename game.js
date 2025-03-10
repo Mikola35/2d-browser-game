@@ -435,9 +435,10 @@ function updateColorPanel() {
 function drawCannon() {
     const baseWidth = 60;
     const baseHeight = 40;
-    const barrelLength = 60;
-    const barrelWidth = 20;
-    const baseRadius = 55; // Радиус круглого основания
+    const barrelLength = 80; // Увеличили длину с 60 до 80
+    const barrelBaseWidth = 20; // Ширина у основания
+    const barrelTipWidth = 10; // Ширина у кончика дула (меньше чем у основания)
+    const baseRadius = 55;
     
     ctx.save();
     ctx.translate(cannonX, cannonY);
@@ -468,13 +469,13 @@ function drawCannon() {
     ctx.closePath();
     ctx.fill();
 
-    // Draw barrel
+    // Draw barrel with tapering
     ctx.fillStyle = colors[currentColorIndex];
     ctx.beginPath();
-    ctx.moveTo(-barrelWidth/2, -baseHeight);
-    ctx.lineTo(barrelWidth/2, -baseHeight);
-    ctx.lineTo(barrelWidth/2, -baseHeight - barrelLength);
-    ctx.lineTo(-barrelWidth/2, -baseHeight - barrelLength);
+    ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
+    ctx.lineTo(barrelBaseWidth/2, -baseHeight);
+    ctx.lineTo(barrelTipWidth/2, -baseHeight - barrelLength);
+    ctx.lineTo(-barrelTipWidth/2, -baseHeight - barrelLength);
     ctx.closePath();
     ctx.fill();
     
