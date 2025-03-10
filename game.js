@@ -115,7 +115,8 @@ const DEFENSE_RADIUS = 200; // Радиус защитной зоны вокру
 let rings = [
     { radius: DEFENSE_RADIUS - 40, active: true },
     { radius: DEFENSE_RADIUS - 20, active: true },
-    { radius: DEFENSE_RADIUS, active: true }
+    { radius: DEFENSE_RADIUS, active: true },
+    { radius: 60, active: true, invisible: true } // Невидимое кольцо вокруг пушки
 ];
 
 // Добавляем настройки для контроля баланса
@@ -333,14 +334,22 @@ class Enemy {
                 this.explode();
                 rings[i].active = false;
                 
-                // Если все кольца уничтожены
-                if (!rings.some(ring => ring.active)) {
-                    if (!isTrainingMode) {
-                        // Добавляем задержку перед окончанием игры
-                        setTimeout(() => {
-                            gameOver = true;
-                        }, 1000); // 1 секунда на анимацию взрыва
-                    }
+                // Если это последнее невидимое кольцо (пушка)
+                if (i === rings.length - 1) {
+                    // Сразу создаем части пушки и отключаем отрисовку оригинальной пушки
+                    gameOver = true;
+                    const pieces = [
+                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'barrel'),
+                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'base'),
+                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'circle')
+                    ];
+                    cannonPieces.push(...pieces);
+                    
+                    setTimeout(() => gameOver = true, 1500);
+                }
+                // Если все видимые кольца уничтожены, активируем последнее
+                else if (!rings.slice(0, -1).some(ring => ring.active)) {
+                    rings[rings.length - 1].active = true; // Активируем невидимое кольцо
                 }
                 
                 score.missed++;
@@ -350,6 +359,64 @@ class Enemy {
         return false;
     }
 }
+
+class CannonPiece {
+    constructor(x, y, color, type) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.type = type; // 'base', 'barrel' или 'circle'
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 8 + 4;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+        this.vx = Math.cos(this.angle) * this.speed;
+        this.vy = Math.sin(this.angle) * this.speed;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.alpha = 1;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.2; // Гравитация
+        this.rotation += this.rotationSpeed;
+        this.alpha = Math.max(0, this.alpha - 0.02);
+        return this.alpha > 0;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        switch(this.type) {
+            case 'base':
+                ctx.fillStyle = '#888';
+                ctx.beginPath();
+                ctx.moveTo(-30, 0);
+                ctx.lineTo(30, 0);
+                ctx.lineTo(20, -20);
+                ctx.lineTo(-20, -20);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case 'barrel':
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-10, -40, 20, 40);
+                break;
+            case 'circle':
+                ctx.fillStyle = '#666';
+                ctx.beginPath();
+                ctx.arc(0, 0, 27, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+        }
+        ctx.restore();
+    }
+}
+
+let cannonPieces = []; // Добавьте это к остальным переменным состояния игры
 
 // Helper functions for UI
 function announceWave(waveNumber) {
@@ -362,7 +429,8 @@ function announceWave(waveNumber) {
 // Удаляем функцию drawDefenseLine и добавляем новую
 function drawDefenseZone() {
     rings.forEach(ring => {
-        if (ring.active) {
+        // Рисуем только видимые кольца
+        if (ring.active && !ring.invisible) {
             ctx.beginPath();
             ctx.arc(cannonX, cannonY, ring.radius, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -437,78 +505,80 @@ function updateColorPanel() {
 }
 
 function drawCannon() {
-    const baseWidth = 60;
-    const baseHeight = 40;
-    const barrelLength = 80; // Увеличили длину с 60 до 80
-    const barrelBaseWidth = 20; // Ширина у основания
-    const barrelTipWidth = 10; // Ширина у кончика дула (меньше чем у основания)
-    const baseRadius = 55;
-    
-    ctx.save();
-    ctx.translate(cannonX, cannonY);
-    ctx.rotate(angle);
-    
-    // Draw laser sight first (under the cannon)
-    const lineLength = Math.max(canvas.width, canvas.height) * 2;
-    ctx.beginPath();
-    ctx.strokeStyle = colors[currentColorIndex] + '20';
-    ctx.lineWidth = 2;
-    ctx.moveTo(0, -baseHeight - barrelLength);
-    ctx.lineTo(0, -lineLength);
-    ctx.stroke();
-    
-    // Draw circular base
-    ctx.fillStyle = '#666';
-    ctx.beginPath();
-    ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Draw base
-    ctx.fillStyle = '#888';
-    ctx.beginPath();
-    ctx.moveTo(-baseWidth/2, 0);
-    ctx.lineTo(baseWidth/2, 0);
-    ctx.lineTo(baseWidth/3, -baseHeight);
-    ctx.lineTo(-baseWidth/3, -baseHeight);
-    ctx.closePath();
-    ctx.fill();
-
-    // Draw barrel with tapering
-    ctx.fillStyle = colors[currentColorIndex];
-    ctx.beginPath();
-    ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
-    ctx.lineTo(barrelBaseWidth/2, -baseHeight);
-    ctx.lineTo(barrelTipWidth/2, -baseHeight - barrelLength);
-    ctx.lineTo(-barrelTipWidth/2, -baseHeight - barrelLength);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Draw auto-fire range if enabled
-    if (isPatrolEnabled && isTrainingMode) {
-        const percent = parseInt(patrolDistance.value) / 100;
-        const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
+    if (!gameOver) {
+        const baseWidth = 60;
+        const baseHeight = 40;
+        const barrelLength = 80; // Увеличили длину с 60 до 80
+        const barrelBaseWidth = 20; // Ширина у основания
+        const barrelTipWidth = 10; // Ширина у кончика дула (меньше чем у основания)
+        const baseRadius = 55;
         
         ctx.save();
-        ctx.resetTransform();
+        ctx.translate(cannonX, cannonY);
+        ctx.rotate(angle);
         
-        // Создаем радиальный градиент
-        const gradient = ctx.createRadialGradient(
-            cannonX, cannonY, DEFENSE_RADIUS, // Внутренний круг
-            cannonX, cannonY, maxRange        // Внешний круг
-        );
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
-        
-        // Рисуем заполненный круг с градиентом
+        // Draw laser sight first (under the cannon)
+        const lineLength = Math.max(canvas.width, canvas.height) * 2;
         ctx.beginPath();
-        ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
+        ctx.strokeStyle = colors[currentColorIndex] + '20';
+        ctx.lineWidth = 2;
+        ctx.moveTo(0, -baseHeight - barrelLength);
+        ctx.lineTo(0, -lineLength);
+        ctx.stroke();
+        
+        // Draw circular base
+        ctx.fillStyle = '#666';
+        ctx.beginPath();
+        ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Draw base
+        ctx.fillStyle = '#888';
+        ctx.beginPath();
+        ctx.moveTo(-baseWidth/2, 0);
+        ctx.lineTo(baseWidth/2, 0);
+        ctx.lineTo(baseWidth/3, -baseHeight);
+        ctx.lineTo(-baseWidth/3, -baseHeight);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw barrel with tapering
+        ctx.fillStyle = colors[currentColorIndex];
+        ctx.beginPath();
+        ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
+        ctx.lineTo(barrelBaseWidth/2, -baseHeight);
+        ctx.lineTo(barrelTipWidth/2, -baseHeight - barrelLength);
+        ctx.lineTo(-barrelTipWidth/2, -baseHeight - barrelLength);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw auto-fire range if enabled
+        if (isPatrolEnabled && isTrainingMode) {
+            const percent = parseInt(patrolDistance.value) / 100;
+            const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
+            
+            ctx.save();
+            ctx.resetTransform();
+            
+            // Создаем радиальный градиент
+            const gradient = ctx.createRadialGradient(
+                cannonX, cannonY, DEFENSE_RADIUS, // Внутренний круг
+                cannonX, cannonY, maxRange        // Внешний круг
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+            
+            // Рисуем заполненный круг с градиентом
+            ctx.beginPath();
+            ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            ctx.restore();
+        }
         
         ctx.restore();
     }
-    
-    ctx.restore();
 }
 
 // Game initialization and event handlers
@@ -693,7 +763,10 @@ function startGame() {
         autoShootBtn.classList.remove('training-mode');
         autoShootBtn.classList.add('battle-mode');
     }
-    rings.forEach(ring => ring.active = true); // Восстанавливаем все кольца
+    rings.forEach((ring, index) => {
+        // Восстанавливаем все кольца, кроме последнего невидимого
+        ring.active = index === rings.length - 1 ? false : true;
+    }); // Восстанавливаем все кольца
     gameLoop();
 }
 
@@ -828,6 +901,10 @@ function gameLoop() {
             drawDefenseZone(); // Заменяем drawDefenseLine на drawDefenseZone
             drawCannon();
             updateStats();
+
+            // Обновление и отрисовка частей пушки
+            cannonPieces = cannonPieces.filter(piece => piece.update());
+            cannonPieces.forEach(piece => piece.draw());
         } else {
             particles.forEach(particle => particle.draw());
             enemies.forEach(enemy => enemy.draw());
@@ -838,6 +915,14 @@ function gameLoop() {
             updateStats();
         }
     } else {
+        // Продолжаем обновлять и отрисовывать частицы и части пушки
+        particles.forEach(particle => particle.update());
+        particles = particles.filter(particle => !particle.isDead);
+        particles.forEach(particle => particle.draw());
+
+        cannonPieces = cannonPieces.filter(piece => piece.update());
+        cannonPieces.forEach(piece => piece.draw());
+
         // Очищаем все UI элементы
         colorPanel.style.display = 'none';
         pauseBtn.style.display = 'none';
@@ -921,7 +1006,7 @@ function handlePatrol() {
 
     enemies.forEach(enemy => {
         const dx = enemy.x - cannonX;
-        const dy = enemy.y - cannonY;
+        const dy = cannonY - enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < minDistance) {
