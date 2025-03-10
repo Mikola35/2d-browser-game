@@ -338,7 +338,7 @@ canvas {
     font-size: 16px;
     background: rgba(255, 255, 255, 0.2);
     color: white;
-    border: 0px solid white;
+    border: 0px солид white;
     border-radius: 25px; /* Максимальное закругление */
     cursor: pointer;
     transition: all 0.3s;
@@ -535,5 +535,39 @@ canvas {
 /* Стили для активного состояния слайдера */
 #patrolDistance:active::-webkit-slider-thumb,
 #patrolDistance:active::-moz-range-thumb {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#autoShootBtn {
+    position: fixed;
+    top: 20px;
+    height: 43px;
+    padding: 0 20px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    min-width: 160px;
+    display: none;
+}
+
+#autoShootBtn.training-mode {
+    right: 383px; /* В тренировочном режиме - перед кнопкой патрулирования */
+}
+
+#autoShootBtn.battle-mode {
+    right: 180px; /* В боевом режиме - на месте кнопки патрулирования */
+}
+
+#autoShootBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#autoShootBtn.active {
+    background: rgba(255, 255, 255, 0.4);
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }

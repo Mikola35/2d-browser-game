@@ -14,6 +14,10 @@ let patrolMaxDistance = 0; // Теперь это будет вычисляем�
 // В начале файла после других констант добавляем:
 let isManualControl = true;
 
+// Добавляем новые переменные в начало файла
+const autoShootBtn = document.getElementById('autoShootBtn');
+let isAutoShootEnabled = false;
+
 // Get DOM elements
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -97,11 +101,11 @@ function getRandomActiveColor() {
 }
 
 const waves = [
-    {killsToNext: 15, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 15 врагов
-    {killsToNext: 25, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 25 врагов
-    {killsToNext: 35, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 35 врагов
-    {killsToNext: 45, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 45 врагов
-    {killsToNext: 55, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 55 врагов
+    {killsToNext: 1, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 15 врагов
+    {killsToNext: 2, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 25 врагов
+    {killsToNext: 3, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 35 врагов
+    {killsToNext: 4, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 45 врагов
+    {killsToNext: 5, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 55 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
@@ -653,6 +657,14 @@ function initializeGame() {
         const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
         e.target.style.background = gradient;
     });
+
+    // В функцию initializeGame добавляем обработчик после остальных обработчиков
+    autoShootBtn.addEventListener('click', () => {
+        isAutoShootEnabled = !isAutoShootEnabled;
+        autoShootBtn.classList.toggle('active');
+    });
+
+    autoShootBtn.style.display = 'none'; // Кнопка скрыта при старте
 }
 
 function startGame() {
@@ -661,6 +673,7 @@ function startGame() {
     colorPanel.style.display = 'flex';
     pauseBtn.style.display = 'block'; // Показываем кнопку паузы
     homeBtn.style.display = 'block'; // Показываем кнопку возврата
+    autoShootBtn.style.display = 'block'; // Показываем кнопку только в игре
     startTime = Date.now();
     score.killsThisWave = 0; // Добавляем счетчик убийств для текущей волны
     announceWave(currentWave);
@@ -670,11 +683,15 @@ function startGame() {
         patrolBtn.classList.remove('hidden');
         patrolRange.classList.remove('hidden');
         patrolRange.style.display = 'none'; // Изначально скрыт
+        autoShootBtn.classList.add('training-mode');
+        autoShootBtn.classList.remove('battle-mode');
         createWaveButtons();
     } else {
         waveSelector.style.display = 'none';
         patrolBtn.classList.add('hidden');
         patrolRange.classList.add('hidden');
+        autoShootBtn.classList.remove('training-mode');
+        autoShootBtn.classList.add('battle-mode');
     }
     rings.forEach(ring => ring.active = true); // Восстанавливаем все кольца
     gameLoop();
@@ -764,6 +781,7 @@ function gameLoop() {
     if(!gameOver && !gameWon) {
         if (!isPaused) {
             handlePatrol(); // Переименовали вызов
+            handleAutoShoot(); // Добавляем вызов функции
             const currentTime = Date.now();
             // Изменяем условие спавна врагов
             if((currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
@@ -826,6 +844,7 @@ function gameLoop() {
         homeBtn.style.display = 'none'; // Скрываем кнопку возврата
         waveSelector.style.display = 'none';
         stats.style.display = 'none';
+        autoShootBtn.style.display = 'none'; // Скрываем кнопку при окончании игры
 
         ctx.fillStyle = gameWon ? '#00FF00' : '#FF0000';
         ctx.font = '48px Arial';
@@ -957,4 +976,48 @@ function smoothRotateToTarget() {
     // Нормализуем итоговый угол
     while (angle > Math.PI) angle -= Math.PI * 2;
     while (angle < -Math.PI) angle += Math.PI * 2;
+}
+
+// Добавляем новую функцию для автоматической стрельбы
+function handleAutoShoot() {
+    if (!isAutoShootEnabled || isPaused) return;
+
+    // Находим врага, на которого указывает пушка
+    let targetEnemy = null;
+    let minAngleDiff = Math.PI / 8; // Максимальное отклонение 22.5 градуса
+    let minRealDistance = Infinity; // Добавляем проверку реального расстояния
+
+    enemies.forEach(enemy => {
+        const dx = enemy.x - cannonX;
+        const dy = cannonY - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const enemyAngle = -Math.atan2(dy, dx) + Math.PI/2;
+        let angleDiff = enemyAngle - angle;
+        
+        // Нормализуем разницу углов
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        
+        // Выбираем ближайшего врага в секторе обстрела
+        if (Math.abs(angleDiff) < minAngleDiff && distance < minRealDistance) {
+            targetEnemy = enemy;
+            minAngleDiff = Math.abs(angleDiff);
+            minRealDistance = distance;
+        }
+    });
+
+    // Если нашли врага в направлении пушки, меняем цвет
+    if (targetEnemy) {
+        const enemyColorIndex = colors.indexOf(targetEnemy.color);
+        if (enemyColorIndex !== currentColorIndex) {
+            currentColorIndex = enemyColorIndex;
+            updateColorPanel();
+        }
+
+        // Стреляем только когда цвет совпадает
+        const now = Date.now();
+        if (now - lastShot > 100) {
+            shoot();
+        }
+    }
 }
