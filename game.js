@@ -67,7 +67,8 @@ let cannonX;
 let cannonY;
 let score = {
     totalEnemies: 0,
-    killed: 0,
+    killed: 0,     // Счётчик уничтоженных врагов
+    points: 0,     // Добавляем счётчик очков
     hits: 0,
     misses: 0,
     shots: 0,
@@ -108,11 +109,11 @@ speed - множитель скорости врагов (1.0 = базовая �
 spawnRate - частота появления врагов в миллисекундах (чем меньше, тем чаще)
 */
 const waves = [
-    {killsToNext: 10, count: 20, speed: 1, spawnRate: 100},   // Нужно убить 10 врагов
-    {killsToNext: 9, count: 30, speed: 1.5, spawnRate: 200}, // Нужно убить 10 врагов
-    {killsToNext: 7, count: 40, speed: 2, spawnRate: 300},   // Нужно убить 10 врагов
-    {killsToNext: 6, count: 50, speed: 2.5, spawnRate: 500}, // Нужно убить 10 врагов
-    {killsToNext: 5, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
+    {killsToNext: 10, count: 10, speed: 1, spawnRate: 100},   // Нужно убить 10 врагов
+    {killsToNext: 9, count: 9, speed: 1.5, spawnRate: 200}, // Нужно убить 10 врагов
+    {killsToNext: 7, count: 7, speed: 2, spawnRate: 300},   // Нужно убить 10 врагов
+    {killsToNext: 6, count: 6, speed: 2.5, spawnRate: 500}, // Нужно убить 10 врагов
+    {killsToNext: 5, count: 5, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
@@ -469,9 +470,11 @@ function updateStats() {
         Время: ${gameTime}<br>
         Волна: ${currentWave}<br>
         ${isTrainingMode ? progress + '<br>' : ''}
-        Очки: ${score.killed}<br>
-        Точность: ${Math.round((score.hits / score.shots || 0) * 100)}%<br>
-        Пропущено: ${score.missed}
+        Врагов на экране: ${enemies.length}/${currentWaveConfig.count}<br>
+        Уничтожено: ${score.killed}<br>
+        Очки: ${score.points}<br>
+        Пропущено: ${score.missed}<br>
+        Точность: ${Math.round((score.hits / score.shots || 0) * 100)}%
     `;
 }
 
@@ -814,6 +817,7 @@ function checkCollisions() {
                 enemies.splice(j, 1);
                 projectiles.splice(i, 1);
                 score.killed++;
+                score.points += 100 * currentWave; // Начисляем очки с учетом номера волны
                 score.hits++;
                 score.killsThisWave++; // Увеличиваем счетчик убийств текущей волны
                 break;
