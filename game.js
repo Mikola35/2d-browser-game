@@ -945,9 +945,20 @@ function gameLoop() {
         ctx.textAlign = 'center';
         
         if(gameOver) {
+            // Изменяем отображение сообщения о проигрыше
             ctx.fillStyle = '#FF0000';
-            ctx.font = '48px Arial';
-            ctx.fillText('Игра окончена!', canvas.width/2, canvas.height/2);
+            ctx.font = 'bold 120px Arial';
+            ctx.fillText('ПОРАЖЕНИЕ', canvas.width/2, canvas.height/2 - 100);
+            
+            // Статистика
+            ctx.font = '24px Arial';
+            ctx.fillStyle = '#FFFFFF';
+            const gameTime = formatTime(Date.now() - startTime);
+            const accuracy = Math.round((score.hits / score.shots || 0) * 100);
+            
+            ctx.fillText(`Время игры: ${gameTime}`, canvas.width/2, canvas.height/2);
+            ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
+            ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         } else if(gameWon && !isTrainingMode) {
             // Победный текст только в боевом режиме
             ctx.fillStyle = '#00FF00';
