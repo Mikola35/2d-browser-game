@@ -2,14 +2,14 @@
 let isTrainingMode = false;
 
 // В начале файла добавляем новые переменные
-const autoFireBtn = document.getElementById('autoFireBtn');
-let isAutoFireEnabled = false;
+const patrolBtn = document.getElementById('patrolBtn');
+let isPatrolEnabled = false;
 
 // В начало файла добавляем переменные
-const autoFireRange = document.getElementById('autoFireRange');
-const autoFireDistance = document.getElementById('autoFireDistance');
-const autoFireDistanceValue = document.getElementById('autoFireDistanceValue');
-let autoFireMaxDistance = 0; // Теперь это будет вычисляемое значение
+const patrolRange = document.getElementById('patrolRange');
+const patrolDistance = document.getElementById('patrolDistance');
+const patrolDistanceValue = document.getElementById('patrolDistanceValue');
+let patrolMaxDistance = 0; // Теперь это будет вычисляемое значение
 
 // В начале файла после других констант добавляем:
 let isManualControl = true;
@@ -480,8 +480,8 @@ function drawCannon() {
     ctx.fill();
     
     // Draw auto-fire range if enabled
-    if (isAutoFireEnabled && isTrainingMode) {
-        const percent = parseInt(autoFireDistance.value) / 100;
+    if (isPatrolEnabled && isTrainingMode) {
+        const percent = parseInt(patrolDistance.value) / 100;
         const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
         
         ctx.save();
@@ -521,7 +521,7 @@ function initializeGame() {
     
     // Event listeners
     window.addEventListener('mousemove', (e) => {
-        if (!isAutoFireEnabled || !isTrainingMode) {
+        if (!isPatrolEnabled || !isTrainingMode) {
             const dx = e.clientX - cannonX;
             const dy = cannonY - e.clientY;
             angle = -Math.atan2(dy, dx) + Math.PI/2;
@@ -535,7 +535,7 @@ function initializeGame() {
     window.addEventListener('wheel', (e) => {
         e.preventDefault();
         // Если включен автоогонь, игнорируем прокрутку
-        if (isAutoFireEnabled && isTrainingMode) return;
+        if (isPatrolEnabled && isTrainingMode) return;
         
         const now = Date.now();
         const timeDelta = now - lastWheelTime;
@@ -628,27 +628,27 @@ function initializeGame() {
         }
     });
 
-    // Обновляем обработчик для кнопки автоматического огня
-    autoFireBtn.addEventListener('click', () => {
-        isAutoFireEnabled = !isAutoFireEnabled;
-        isManualControl = !isAutoFireEnabled;
-        autoFireBtn.classList.toggle('active');
-        autoFireRange.style.display = isAutoFireEnabled ? 'flex' : 'none';
+    // Обновляем обработчик для кнопки патрулирования
+    patrolBtn.addEventListener('click', () => {
+        isPatrolEnabled = !isPatrolEnabled;
+        isManualControl = !isPatrolEnabled;
+        patrolBtn.classList.toggle('active');
+        patrolRange.style.display = isPatrolEnabled ? 'flex' : 'none';
 
         // Инициализируем градиент при первом показе слайдера
-        if (isAutoFireEnabled) {
+        if (isPatrolEnabled) {
             patrolAngle = 0;
             patrolDirection = 1;
-            const value = autoFireDistance.value;
+            const value = patrolDistance.value;
             const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
-            autoFireDistance.style.background = gradient;
+            patrolDistance.style.background = gradient;
         }
     });
 
     // Обновляем обработчик для слайдера
-    autoFireDistance.addEventListener('input', (e) => {
+    patrolDistance.addEventListener('input', (e) => {
         const value = e.target.value;
-        autoFireDistanceValue.textContent = `${value}%`;
+        patrolDistanceValue.textContent = `${value}%`;
         // Обновляем градиент для Chrome
         const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
         e.target.style.background = gradient;
@@ -667,14 +667,14 @@ function startGame() {
     activeEnemyColors = []; // Очищаем массив активных цветов
     if (isTrainingMode) {
         waveSelector.style.display = 'flex';
-        autoFireBtn.classList.remove('hidden');
-        autoFireRange.classList.remove('hidden');
-        autoFireRange.style.display = 'none'; // Изначально скрыт
+        patrolBtn.classList.remove('hidden');
+        patrolRange.classList.remove('hidden');
+        patrolRange.style.display = 'none'; // Изначально скрыт
         createWaveButtons();
     } else {
         waveSelector.style.display = 'none';
-        autoFireBtn.classList.add('hidden');
-        autoFireRange.classList.add('hidden');
+        patrolBtn.classList.add('hidden');
+        patrolRange.classList.add('hidden');
     }
     rings.forEach(ring => ring.active = true); // Восстанавливаем все кольца
     gameLoop();
@@ -763,7 +763,7 @@ function gameLoop() {
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
-            handleAutoFire(); // Добавляем перед обновлением состояния игры
+            handlePatrol(); // Переименовали вызов
             const currentTime = Date.now();
             // Изменяем условие спавна врагов
             if((currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
@@ -890,8 +890,8 @@ function createWaveButtons() {
 }
 
 // Обновляем функцию handleAutoFire
-function handleAutoFire() {
-    if (!isAutoFireEnabled || !isTrainingMode) return;
+function handlePatrol() {
+    if (!isPatrolEnabled || !isTrainingMode) return;
 
     const now = Date.now();
     if (now - lastShot < 100) return;
@@ -912,7 +912,7 @@ function handleAutoFire() {
     });
 
     // Рассчитываем максимальную дистанцию
-    const percent = parseInt(autoFireDistance.value) / 100;
+    const percent = parseInt(patrolDistance.value) / 100;
     const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
 
     if (closestEnemy && minDistance < maxRange) {

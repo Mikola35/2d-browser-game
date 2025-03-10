@@ -265,7 +265,8 @@ canvas {
     background: rgba(20, 20, 20, 0.95); /* Сделали фон контента темнее и менее прозрачным */
     padding: 40px;
     border-radius: 10px;
-    max-width: 600px;
+    max-width: 800px; /* Увеличиваем с 600px до 800px */
+    width: 90%; /* Добавляем ограничение по ширине */
     color: white;
     text-align: left;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Добавили тень для лучшего контраста */
@@ -435,4 +436,104 @@ canvas {
 #autoFireDistanceValue {
     color: white;
     font-size: 14px;
+}
+
+#patrolBtn {
+    position: fixed;
+    top: 20px;
+    right: 180px;
+    height: 43px;
+    padding: 0 20px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    min-width: 180px;
+}
+
+#patrolBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#patrolBtn.active {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#patrolRange {
+    position: fixed;
+    top: 70px;
+    right: 165px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 15px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 80px;
+    width: 190px;
+}
+
+#patrolDistance {
+    width: 100%;
+    cursor: pointer;
+    margin: 0;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+#patrolDistanceValue {
+    color: white;
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Добавляем свечение */
+    font-weight: bold; /* Делаем текст жирным */
+    min-width: 40px; /* Фиксированная ширина для значения */
+    text-align: center;
+}
+
+#patrolDistance::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: 0px;
+}
+
+#patrolDistance::-moz-range-track {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#patrolDistance::-moz-range-progress {
+    height: 8px;
+    border-radius: 4px;
+    background: white; /* Изменили цвет прогресса на чисто белый */
+}
+
+#patrolDistance::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Стили для активного состояния слайдера */
+#patrolDistance:active::-webkit-slider-thumb,
+#patrolDistance:active::-moz-range-thumb {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
