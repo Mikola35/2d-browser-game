@@ -815,7 +815,7 @@ function checkCollisions() {
         }
     }
 
-    // Проверяем условие перехода на следующую волну и победы
+    // Проверяем условие перехода на следующую волну
     if (score.killsThisWave >= waves[currentWave - 1].killsToNext) {
         if (currentWave < waves.length) {
             // Переход на следующую волну
@@ -827,11 +827,20 @@ function checkCollisions() {
                 updateWaveButtons();
             }
         } else if (currentWave === waves.length) {
-            // Последняя волна пройдена - добавляем задержку перед победой
-            setTimeout(() => {
-                gameWon = true;
-                spawnRate = Infinity;
-            }, 1000); // Задержка в 1 секунду
+            if (isTrainingMode) {
+                // В тренировочном режиме начинаем заново с первой волны
+                currentWave = 1;
+                score.killsThisWave = 0;
+                spawnRate = waves[currentWave - 1].spawnRate;
+                announceWave(currentWave);
+                updateWaveButtons();
+            } else {
+                // В боевом режиме объявляем победу
+                setTimeout(() => {
+                    gameWon = true;
+                    spawnRate = Infinity;
+                }, 1000);
+            }
         }
     }
 
@@ -939,8 +948,8 @@ function gameLoop() {
             ctx.fillStyle = '#FF0000';
             ctx.font = '48px Arial';
             ctx.fillText('Игра окончена!', canvas.width/2, canvas.height/2);
-        } else if(gameWon) {
-            // Победный текст
+        } else if(gameWon && !isTrainingMode) {
+            // Победный текст только в боевом режиме
             ctx.fillStyle = '#00FF00';
             ctx.font = 'bold 120px Arial';
             ctx.fillText('ПОБЕДА!', canvas.width/2, canvas.height/2 - 100);
@@ -956,9 +965,11 @@ function gameLoop() {
             ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         }
         
-        // Отодвигаем кнопку ниже
-        restartBtn.style.display = 'block';
-        restartBtn.style.top = '70%';
+        // Отображаем кнопку "Играть снова" только при проигрыше или победе в боевом режиме
+        if (gameOver || (gameWon && !isTrainingMode)) {
+            restartBtn.style.display = 'block';
+            restartBtn.style.top = '70%';
+        }
     }
     
     requestAnimationFrame(gameLoop);
