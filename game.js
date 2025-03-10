@@ -134,15 +134,15 @@ class Projectile {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.speed = 48;
+        this.speed = 32;
         this.vx = Math.sin(angle) * this.speed;
         this.vy = -Math.cos(angle) * this.speed;
         this.radius = 8;
         // Добавляем массив для хвоста
         this.trail = [];
-        this.trailLength = 4; // Длина хвоста (количество точек)
-        this.width = 6;  // Ширина лазерного луча
-        this.length = 24; // Длина лазерного луча
+        this.trailLength = 6; // Длина хвоста (количество точек)
+        this.width = 4;  // Ширина лазерного луча
+        this.length = 4; // Длина лазерного луча
     }
 
     update() {
