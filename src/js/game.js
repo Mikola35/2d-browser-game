@@ -1,23 +1,6 @@
 // Добавим в начало файла переменную режима
 let isTrainingMode = false;
 
-// В начале файла добавляем новые переменные
-const patrolBtn = document.getElementById('patrolBtn');
-let isPatrolEnabled = false;
-
-// В начало файла добавляем переменные
-const patrolRange = document.getElementById('patrolRange');
-const patrolDistance = document.getElementById('patrolDistance');
-const patrolDistanceValue = document.getElementById('patrolDistanceValue');
-let patrolMaxDistance = 0; // Теперь это будет вычисляемое значение
-
-// В начале файла после других констант добавляем:
-let isManualControl = true;
-
-// Добавляем новые переменные в начало файла
-const autoShootBtn = document.getElementById('autoShootBtn');
-let isAutoShootEnabled = false;
-
 // Get DOM elements
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -31,23 +14,7 @@ const pauseBtn = document.getElementById('pauseBtn');
 const pauseText = document.getElementById('pauseText');
 const waveSelector = document.getElementById('waveSelector');
 const homeBtn = document.getElementById('homeBtn');
-const howToPlayBtn = document.getElementById('howToPlayBtn');
-const instructionsScreen = document.getElementById('instructionsScreen');
-const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
 let isPaused = false;
-
-// Добавляем после других переменных состояния игры
-let patrolAngle = 0;
-let patrolDirection = 1;
-const PATROL_SPEED = 0.0005; // Снижаем скорость патрулирования
-const PATROL_RANGE = Math.PI / 6; // Уменьшаем диапазон до 30 градусов
-
-// Добавляем после других переменных состояния игры
-let targetAngle = 0; // Целевой угол для плавного поворота
-const ROTATION_SPEED = 0.05; // Уменьшаем скорость поворота
-
-// Добавляем после других переменных состояния игры
-let basePatrolAngle = 0; // Базовый угол для патрулирования
 
 // Game state variables
 let enemies = [];
@@ -101,11 +68,11 @@ function getRandomActiveColor() {
 }
 
 const waves = [
-    {killsToNext: 1, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 15 врагов
-    {killsToNext: 2, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 25 врагов
-    {killsToNext: 3, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 35 врагов
-    {killsToNext: 4, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 45 врагов
-    {killsToNext: 5, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 55 врагов
+    {killsToNext: 15, count: 20, speed: 1, spawnRate: 3000},   // Нужно убить 15 врагов
+    {killsToNext: 25, count: 30, speed: 1.5, spawnRate: 2500}, // Нужно убить 25 врагов
+    {killsToNext: 35, count: 40, speed: 2, spawnRate: 2000},   // Нужно убить 35 врагов
+    {killsToNext: 45, count: 50, speed: 2.5, spawnRate: 1500}, // Нужно убить 45 врагов
+    {killsToNext: 55, count: 60, speed: 3, spawnRate: 1000}    // Нужно убить 55 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
@@ -115,8 +82,7 @@ const DEFENSE_RADIUS = 200; // Радиус защитной зоны вокру
 let rings = [
     { radius: DEFENSE_RADIUS - 40, active: true },
     { radius: DEFENSE_RADIUS - 20, active: true },
-    { radius: DEFENSE_RADIUS, active: true },
-    { radius: 60, active: true, invisible: true } // Невидимое кольцо вокруг пушки
+    { radius: DEFENSE_RADIUS, active: true }
 ];
 
 // Добавляем настройки для контроля баланса
@@ -135,15 +101,15 @@ class Projectile {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.speed = 32;
+        this.speed = 48;
         this.vx = Math.sin(angle) * this.speed;
         this.vy = -Math.cos(angle) * this.speed;
         this.radius = 8;
         // Добавляем массив для хвоста
         this.trail = [];
-        this.trailLength = 6; // Длина хвоста (количество точек)
-        this.width = 4;  // Ширина лазерного луча
-        this.length = 4; // Длина лазерного луча
+        this.trailLength = 4; // Длина хвоста (количество точек)
+        this.width = 6;  // Ширина лазерного луча
+        this.length = 24; // Длина лазерного луча
     }
 
     update() {
@@ -334,22 +300,11 @@ class Enemy {
                 this.explode();
                 rings[i].active = false;
                 
-                // Если это последнее невидимое кольцо (пушка)
-                if (i === rings.length - 1) {
-                    // Сразу создаем части пушки и отключаем отрисовку оригинальной пушки
-                    gameOver = true;
-                    const pieces = [
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'barrel'),
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'base'),
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'circle')
-                    ];
-                    cannonPieces.push(...pieces);
-                    
-                    setTimeout(() => gameOver = true, 1500);
-                }
-                // Если все видимые кольца уничтожены, активируем последнее
-                else if (!rings.slice(0, -1).some(ring => ring.active)) {
-                    rings[rings.length - 1].active = true; // Активируем невидимое кольцо
+                // Если все кольца уничтожены
+                if (!rings.some(ring => ring.active)) {
+                    if (!isTrainingMode) {
+                        gameOver = true;
+                    }
                 }
                 
                 score.missed++;
@@ -360,77 +315,19 @@ class Enemy {
     }
 }
 
-class CannonPiece {
-    constructor(x, y, color, type) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.type = type; // 'base', 'barrel' или 'circle'
-        this.angle = Math.random() * Math.PI * 2;
-        this.speed = Math.random() * 8 + 4;
-        this.rotationSpeed = (Math.random() - 0.5) * 0.2;
-        this.vx = Math.cos(this.angle) * this.speed;
-        this.vy = Math.sin(this.angle) * this.speed;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.alpha = 1;
-    }
-
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vy += 0.2; // Гравитация
-        this.rotation += this.rotationSpeed;
-        this.alpha = Math.max(0, this.alpha - 0.02);
-        return this.alpha > 0;
-    }
-
-    draw() {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        switch(this.type) {
-            case 'base':
-                ctx.fillStyle = '#888';
-                ctx.beginPath();
-                ctx.moveTo(-30, 0);
-                ctx.lineTo(30, 0);
-                ctx.lineTo(20, -20);
-                ctx.lineTo(-20, -20);
-                ctx.closePath();
-                ctx.fill();
-                break;
-            case 'barrel':
-                ctx.fillStyle = this.color;
-                ctx.fillRect(-10, -40, 20, 40);
-                break;
-            case 'circle':
-                ctx.fillStyle = '#666';
-                ctx.beginPath();
-                ctx.arc(0, 0, 27, 0, Math.PI * 2);
-                ctx.fill();
-                break;
-        }
-        ctx.restore();
-    }
-}
-
-let cannonPieces = []; // Добавьте это к остальным переменным состояния игры
-
 // Helper functions for UI
 function announceWave(waveNumber) {
-    waveAnnouncement.style.animation = 'none';
-    waveAnnouncement.offsetHeight; // Форсируем перерасчет стилей
     waveAnnouncement.textContent = `Волна ${waveNumber}`;
-    waveAnnouncement.style.animation = 'announceWave 2s ease-in-out forwards';
+    waveAnnouncement.style.opacity = '1';
+    setTimeout(() => {
+        waveAnnouncement.style.opacity = '0';
+    }, 2000);
 }
 
 // Удаляем функцию drawDefenseLine и добавляем новую
 function drawDefenseZone() {
     rings.forEach(ring => {
-        // Рисуем только видимые кольца
-        if (ring.active && !ring.invisible) {
+        if (ring.active) {
             ctx.beginPath();
             ctx.arc(cannonX, cannonY, ring.radius, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -442,25 +339,14 @@ function drawDefenseZone() {
     });
 }
 
-function formatTime(ms) {
-    const seconds = Math.floor((ms / 1000) % 60);
-    const minutes = Math.floor((ms / 1000 / 60) % 60);
-    const hours = Math.floor(ms / 1000 / 60 / 60);
-    
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
 function updateStats() {
     const currentWaveConfig = waves[currentWave - 1];
     const killsNeeded = currentWaveConfig.killsToNext;
     const progress = isTrainingMode ? 
         `Прогресс волны: ${score.killsThisWave}/${killsNeeded}` : '';
-    
-    const gameTime = formatTime(Date.now() - startTime);
 
     stats.innerHTML = `
         ${isTrainingMode ? 'Режим: Тренировка<br>' : ''}
-        Время: ${gameTime}<br>
         Волна: ${currentWave}<br>
         ${isTrainingMode ? progress + '<br>' : ''}
         Очки: ${score.killed}<br>
@@ -470,25 +356,20 @@ function updateStats() {
 }
 
 function getActiveColors() {
-    // Если врагов нет, просто возвращаем последний активный цвет
-    if (enemies.length === 0) {
-        return [colors[currentColorIndex]];
-    }
-    // Иначе возвращаем цвета активных врагов
-    return [...new Set(enemies.map(enemy => enemy.color))];
+    // Если врагов нет, возвращаем все доступные цвета
+    // Иначе только те цвета, которые есть у активных врагов
+    return enemies.length > 0 
+        ? [...new Set(enemies.map(enemy => enemy.color))] 
+        : colors;
 }
 
 function createColorPanel() {
     colorPanel.innerHTML = '';
     const activeColors = getActiveColors();
     
-    // Автоматически переключаемся на цвет первого врага, если это первый враг
-    if (enemies.length === 1) {
-        currentColorIndex = colors.indexOf(enemies[0].color);
-    }
-    // Если текущий цвет не в списке активных цветов, добавляем его
-    else if (!activeColors.includes(colors[currentColorIndex])) {
-        activeColors.push(colors[currentColorIndex]);
+    // Если текущий цвет больше не активен, переключаемся на первый доступный
+    if (!activeColors.includes(colors[currentColorIndex])) {
+        currentColorIndex = colors.indexOf(activeColors[0]);
     }
     
     activeColors.forEach(color => {
@@ -510,80 +391,45 @@ function updateColorPanel() {
 }
 
 function drawCannon() {
-    if (!gameOver) {
-        const baseWidth = 60;
-        const baseHeight = 40;
-        const barrelLength = 80; // Увеличили длину с 60 до 80
-        const barrelBaseWidth = 20; // Ширина у основания
-        const barrelTipWidth = 10; // Ширина у кончика дула (меньше чем у основания)
-        const baseRadius = 55;
-        
-        ctx.save();
-        ctx.translate(cannonX, cannonY);
-        ctx.rotate(angle);
-        
-        // Draw laser sight first (under the cannon)
-        const lineLength = Math.max(canvas.width, canvas.height) * 2;
-        ctx.beginPath();
-        ctx.strokeStyle = colors[currentColorIndex] + '20';
-        ctx.lineWidth = 2;
-        ctx.moveTo(0, -baseHeight - barrelLength);
-        ctx.lineTo(0, -lineLength);
-        ctx.stroke();
-        
-        // Draw circular base
-        ctx.fillStyle = '#666';
-        ctx.beginPath();
-        ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw base
-        ctx.fillStyle = '#888';
-        ctx.beginPath();
-        ctx.moveTo(-baseWidth/2, 0);
-        ctx.lineTo(baseWidth/2, 0);
-        ctx.lineTo(baseWidth/3, -baseHeight);
-        ctx.lineTo(-baseWidth/3, -baseHeight);
-        ctx.closePath();
-        ctx.fill();
+    const baseWidth = 60;
+    const baseHeight = 40;
+    const barrelLength = 60;
+    const barrelWidth = 20;
+    
+    ctx.save();
+    ctx.translate(cannonX, cannonY);
+    ctx.rotate(angle);
+    
+    // Draw laser sight first (under the cannon)
+    const lineLength = Math.max(canvas.width, canvas.height) * 2; // Достаточно длинная линия
+    ctx.beginPath();
+    ctx.strokeStyle = colors[currentColorIndex] + '20'; // Меняем с '40' на '20' (12.5% прозрачности)
+    ctx.lineWidth = 2;
+    ctx.moveTo(0, -baseHeight - barrelLength);
+    ctx.lineTo(0, -lineLength);
+    ctx.stroke();
+    
+    // Draw base
+    ctx.fillStyle = '#888';
+    ctx.beginPath();
+    ctx.moveTo(-baseWidth/2, 0);
+    ctx.lineTo(baseWidth/2, 0);
+    ctx.lineTo(baseWidth/3, -baseHeight);
+    ctx.lineTo(-baseWidth/3, -baseHeight);
+    ctx.closePath();
+    ctx.fill();
 
-        // Draw barrel with tapering
-        ctx.fillStyle = colors[currentColorIndex];
-        ctx.beginPath();
-        ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
-        ctx.lineTo(barrelBaseWidth/2, -baseHeight);
-        ctx.lineTo(barrelTipWidth/2, -baseHeight - barrelLength);
-        ctx.lineTo(-barrelTipWidth/2, -baseHeight - barrelLength);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Draw auto-fire range if enabled
-        if (isPatrolEnabled && isTrainingMode) {
-            const percent = parseInt(patrolDistance.value) / 100;
-            const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
-            
-            ctx.save();
-            ctx.resetTransform();
-            
-            // Создаем радиальный градиент
-            const gradient = ctx.createRadialGradient(
-                cannonX, cannonY, DEFENSE_RADIUS, // Внутренний круг
-                cannonX, cannonY, maxRange        // Внешний круг
-            );
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
-            
-            // Рисуем заполненный круг с градиентом
-            ctx.beginPath();
-            ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
-            ctx.fill();
-            
-            ctx.restore();
-        }
-        
-        ctx.restore();
-    }
+    // Draw barrel
+    ctx.fillStyle = colors[currentColorIndex];
+    ctx.beginPath();
+    ctx.moveTo(-barrelWidth/2, -baseHeight);
+    ctx.lineTo(barrelWidth/2, -baseHeight);
+    ctx.lineTo(barrelWidth/2, -baseHeight - barrelLength);
+    ctx.lineTo(-barrelWidth/2, -baseHeight - barrelLength);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
 }
 
 // Game initialization and event handlers
@@ -600,12 +446,9 @@ function initializeGame() {
     
     // Event listeners
     window.addEventListener('mousemove', (e) => {
-        if (!isPatrolEnabled || !isTrainingMode) {
-            const dx = e.clientX - cannonX;
-            const dy = cannonY - e.clientY;
-            angle = -Math.atan2(dy, dx) + Math.PI/2;
-            isManualControl = true;
-        }
+        const dx = e.clientX - cannonX;
+        const dy = cannonY - e.clientY;
+        angle = -Math.atan2(dy, dx) + Math.PI/2;
     });
     
     // Удаляем старые обработчики mousedown и mouseup
@@ -613,37 +456,32 @@ function initializeGame() {
     // Обновляем обработчик колесика
     window.addEventListener('wheel', (e) => {
         e.preventDefault();
-        // Если включен автоогонь, игнорируем прокрутку
-        if (isPatrolEnabled && isTrainingMode) return;
-        
         const now = Date.now();
         const timeDelta = now - lastWheelTime;
         
-        if (timeDelta < 200) {
+        // Рассчитываем скорость прокрутки
+        if (timeDelta < 200) { // Если прокрутка была недавно
             wheelSpeed = Math.min(20, wheelSpeed + Math.abs(e.deltaY) / 100);
         } else {
             wheelSpeed = Math.abs(e.deltaY) / 100;
         }
 
+        // Сбрасываем скорость через некоторое время
         setTimeout(() => {
             wheelSpeed *= 0.5;
         }, 50);
 
         lastWheelTime = now;
         
+        // Стреляем количество раз пропорционально скорости
         const shots = Math.ceil(wheelSpeed);
         for(let i = 0; i < shots; i++) {
             shoot();
         }
     });
 
-    // Заменяем обработчик клика
+    // Добавляем обработчик левой кнопки мыши для смены цвета влево
     window.addEventListener('click', (e) => {
-        // Если клик был по ссылке, не делаем ничего
-        if (e.target.tagName === 'A') {
-            return;
-        }
-        
         e.preventDefault();
         if (e.button === 0) { // Левая кнопка мыши
             changeColor('left');
@@ -690,56 +528,6 @@ function initializeGame() {
     homeBtn.addEventListener('click', () => {
         location.reload(); // Перезагружаем страницу для возврата в главное меню
     });
-
-    // Add instruction screen handlers
-    howToPlayBtn.addEventListener('click', () => {
-        instructionsScreen.classList.remove('hidden');
-    });
-
-    closeInstructionsBtn.addEventListener('click', () => {
-        instructionsScreen.classList.add('hidden');
-    });
-
-    // Закрытие по клику вне контента
-    instructionsScreen.addEventListener('click', (e) => {
-        if (e.target === instructionsScreen) {
-            instructionsScreen.classList.add('hidden');
-        }
-    });
-
-    // Обновляем обработчик для кнопки патрулирования
-    patrolBtn.addEventListener('click', () => {
-        isPatrolEnabled = !isPatrolEnabled;
-        isManualControl = !isPatrolEnabled;
-        patrolBtn.classList.toggle('active');
-        patrolRange.style.display = isPatrolEnabled ? 'flex' : 'none';
-
-        // Инициализируем градиент при первом показе слайдера
-        if (isPatrolEnabled) {
-            patrolAngle = 0;
-            patrolDirection = 1;
-            const value = patrolDistance.value;
-            const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
-            patrolDistance.style.background = gradient;
-        }
-    });
-
-    // Обновляем обработчик для слайдера
-    patrolDistance.addEventListener('input', (e) => {
-        const value = e.target.value;
-        patrolDistanceValue.textContent = `${value}%`;
-        // Обновляем градиент для Chrome
-        const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
-        e.target.style.background = gradient;
-    });
-
-    // В функцию initializeGame добавляем обработчик после остальных обработчиков
-    autoShootBtn.addEventListener('click', () => {
-        isAutoShootEnabled = !isAutoShootEnabled;
-        autoShootBtn.classList.toggle('active');
-    });
-
-    autoShootBtn.style.display = 'none'; // Кнопка скрыта при старте
 }
 
 function startGame() {
@@ -748,30 +536,17 @@ function startGame() {
     colorPanel.style.display = 'flex';
     pauseBtn.style.display = 'block'; // Показываем кнопку паузы
     homeBtn.style.display = 'block'; // Показываем кнопку возврата
-    autoShootBtn.style.display = 'block'; // Показываем кнопку только в игре
     startTime = Date.now();
     score.killsThisWave = 0; // Добавляем счетчик убийств для текущей волны
     announceWave(currentWave);
     activeEnemyColors = []; // Очищаем массив активных цветов
     if (isTrainingMode) {
         waveSelector.style.display = 'flex';
-        patrolBtn.classList.remove('hidden');
-        patrolRange.classList.remove('hidden');
-        patrolRange.style.display = 'none'; // Изначально скрыт
-        autoShootBtn.classList.add('training-mode');
-        autoShootBtn.classList.remove('battle-mode');
         createWaveButtons();
     } else {
         waveSelector.style.display = 'none';
-        patrolBtn.classList.add('hidden');
-        patrolRange.classList.add('hidden');
-        autoShootBtn.classList.remove('training-mode');
-        autoShootBtn.classList.add('battle-mode');
     }
-    rings.forEach((ring, index) => {
-        // Восстанавливаем все кольца, кроме последнего невидимого
-        ring.active = index === rings.length - 1 ? false : true;
-    }); // Восстанавливаем все кольца
+    rings.forEach(ring => ring.active = true); // Восстанавливаем все кольца
     gameLoop();
 }
 
@@ -815,23 +590,25 @@ function checkCollisions() {
         }
     }
 
-    // Проверяем условие перехода на следующую волну и победы
+    // Проверяем условие перехода на следующую волну для обоих режимов
     if (score.killsThisWave >= waves[currentWave - 1].killsToNext) {
         if (currentWave < waves.length) {
-            // Переход на следующую волну
             currentWave++;
             score.killsThisWave = 0;
             spawnRate = waves[currentWave - 1].spawnRate;
             announceWave(currentWave);
             if (isTrainingMode) {
-                updateWaveButtons();
+                updateWaveButtons(); // Обновляем активную кнопку
             }
-        } else if (currentWave === waves.length) {
-            // Последняя волна пройдена - добавляем задержку перед победой
-            setTimeout(() => {
-                gameWon = true;
-                spawnRate = Infinity;
-            }, 1000); // Задержка в 1 секунду
+        } else if (enemies.length === 0) {
+            // Победа в любом режиме после прохождения всех волн
+            gameWon = true;
+        } else if (isTrainingMode) {
+            currentWave = 1;
+            score.killsThisWave = 0;
+            spawnRate = waves[currentWave - 1].spawnRate;
+            announceWave(currentWave);
+            updateWaveButtons(); // Обновляем активную кнопку при возврате к первой волне
         }
     }
 
@@ -856,12 +633,11 @@ function gameLoop() {
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
-            handlePatrol(); // Переименовали вызов
-            handleAutoShoot(); // Добавляем вызов функции
             const currentTime = Date.now();
-            // Спавним врагов только если игра не выиграна
-            if(!gameWon && currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
-               (isTrainingMode || enemies.length < waves[currentWave - 1].count)) {
+            // Изменяем условие спавна врагов
+            if((currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
+               (isTrainingMode || enemies.length < waves[currentWave - 1].count)) || 
+               enemies.length < 2) { // Добавляем проверку на минимум 2 врага
                 enemies.push(new Enemy());
                 lastSpawn = currentTime;
             }
@@ -903,10 +679,6 @@ function gameLoop() {
             drawDefenseZone(); // Заменяем drawDefenseLine на drawDefenseZone
             drawCannon();
             updateStats();
-
-            // Обновление и отрисовка частей пушки
-            cannonPieces = cannonPieces.filter(piece => piece.update());
-            cannonPieces.forEach(piece => piece.draw());
         } else {
             particles.forEach(particle => particle.draw());
             enemies.forEach(enemy => enemy.draw());
@@ -917,48 +689,22 @@ function gameLoop() {
             updateStats();
         }
     } else {
-        // Продолжаем обновлять и отрисовывать частицы и части пушки
-        particles.forEach(particle => particle.update());
-        particles = particles.filter(particle => !particle.isDead);
-        particles.forEach(particle => particle.draw());
-
-        cannonPieces = cannonPieces.filter(piece => piece.update());
-        cannonPieces.forEach(piece => piece.draw());
-
         // Очищаем все UI элементы
         colorPanel.style.display = 'none';
         pauseBtn.style.display = 'none';
-        homeBtn.style.display = 'none';
+        homeBtn.style.display = 'none'; // Скрываем кнопку возврата
         waveSelector.style.display = 'none';
         stats.style.display = 'none';
-        autoShootBtn.style.display = 'none';
 
+        ctx.fillStyle = gameWon ? '#00FF00' : '#FF0000';
+        ctx.font = '48px Arial';
         ctx.textAlign = 'center';
-        
         if(gameOver) {
-            ctx.fillStyle = '#FF0000';
-            ctx.font = '48px Arial';
             ctx.fillText('Игра окончена!', canvas.width/2, canvas.height/2);
         } else if(gameWon) {
-            // Победный текст
-            ctx.fillStyle = '#00FF00';
-            ctx.font = 'bold 120px Arial';
-            ctx.fillText('ПОБЕДА!', canvas.width/2, canvas.height/2 - 100);
-            
-            // Статистика
-            ctx.font = '24px Arial';
-            ctx.fillStyle = '#FFFFFF';
-            const gameTime = formatTime(Date.now() - startTime);
-            const accuracy = Math.round((score.hits / score.shots || 0) * 100);
-            
-            ctx.fillText(`Время игры: ${gameTime}`, canvas.width/2, canvas.height/2);
-            ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
-            ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
+            ctx.fillText('Игра пройдена!', canvas.width/2, canvas.height/2);
         }
-        
-        // Отодвигаем кнопку ниже
         restartBtn.style.display = 'block';
-        restartBtn.style.top = '70%';
     }
     
     requestAnimationFrame(gameLoop);
@@ -1010,118 +756,4 @@ function createWaveButtons() {
         };
         waveSelector.appendChild(button);
     });
-}
-
-// Обновляем функцию handleAutoFire
-function handlePatrol() {
-    if (!isPatrolEnabled || !isTrainingMode) return;
-
-    const now = Date.now();
-    if (now - lastShot < 100) return;
-
-    // Находим ближайшего врага
-    let closestEnemy = null;
-    let minDistance = Infinity;
-
-    enemies.forEach(enemy => {
-        const dx = enemy.x - cannonX;
-        const dy = cannonY - enemy.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < minDistance) {
-            minDistance = distance;
-            closestEnemy = enemy;
-        }
-    });
-
-    // Рассчитываем максимальную дистанцию
-    const percent = parseInt(patrolDistance.value) / 100;
-    const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
-
-    if (closestEnemy && minDistance < maxRange) {
-        const enemyColorIndex = colors.indexOf(closestEnemy.color);
-        if (enemyColorIndex !== currentColorIndex) {
-            currentColorIndex = enemyColorIndex;
-            updateColorPanel();
-        }
-
-        const dx = closestEnemy.x - cannonX;
-        const dy = cannonY - closestEnemy.y;
-        targetAngle = -Math.atan2(dy, dx) + Math.PI/2;
-        
-        // Запоминаем текущий угол как базовый для патрулирования
-        basePatrolAngle = angle;
-    } else {
-        // Плавное патрулирование с использованием косинуса
-        targetAngle = basePatrolAngle + Math.cos(Date.now() * PATROL_SPEED) * PATROL_RANGE;
-    }
-
-    // Плавный поворот к цели
-    smoothRotateToTarget();
-
-    // Стреляем только если пушка направлена на цель и есть враг
-    if (closestEnemy && minDistance < maxRange && Math.abs(targetAngle - angle) < 0.1) {
-        shoot();
-    }
-}
-
-function smoothRotateToTarget() {
-    let angleDiff = targetAngle - angle;
-    
-    // Нормализуем разницу углов
-    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-    
-    // Добавляем плавное замедление при приближении к цели
-    const rotationAmount = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), ROTATION_SPEED);
-    
-    angle += rotationAmount;
-    
-    // Нормализуем итоговый угол
-    while (angle > Math.PI) angle -= Math.PI * 2;
-    while (angle < -Math.PI) angle += Math.PI * 2;
-}
-
-// Добавляем новую функцию для автоматической стрельбы
-function handleAutoShoot() {
-    if (!isAutoShootEnabled || isPaused) return;
-
-    // Находим врага, на которого указывает пушка
-    let targetEnemy = null;
-    let minAngleDiff = Math.PI / 8; // Максимальное отклонение 22.5 градуса
-    let minRealDistance = Infinity; // Добавляем проверку реального расстояния
-
-    enemies.forEach(enemy => {
-        const dx = enemy.x - cannonX;
-        const dy = cannonY - enemy.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const enemyAngle = -Math.atan2(dy, dx) + Math.PI/2;
-        let angleDiff = enemyAngle - angle;
-        
-        // Нормализуем разницу углов
-        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-        
-        // Выбираем ближайшего врага в секторе обстрела
-        if (Math.abs(angleDiff) < minAngleDiff && distance < minRealDistance) {
-            targetEnemy = enemy;
-            minAngleDiff = Math.abs(angleDiff);
-            minRealDistance = distance;
-        }
-    });
-
-    // Если нашли врага в направлении пушки, меняем цвет
-    if (targetEnemy) {
-        const enemyColorIndex = colors.indexOf(targetEnemy.color);
-        if (enemyColorIndex !== currentColorIndex) {
-            currentColorIndex = enemyColorIndex;
-            updateColorPanel();
-        }
-
-        // Стреляем только когда цвет совпадает
-        const now = Date.now();
-        if (now - lastShot > 100) {
-            shoot();
-        }
-    }
 }

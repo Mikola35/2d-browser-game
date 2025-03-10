@@ -1,0 +1,208 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+    user-select: none;
+}
+canvas {
+    display: none;
+}
+#mainMenu {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+#gameTitle {
+    color: #fff;
+    font-size: 72px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.7);
+    margin-bottom: 40px;
+    text-align: center;
+    animation: glowSpectrum 8s infinite linear;
+}
+@keyframes glowSpectrum {
+    0% { text-shadow: 0 0 20px #FF0000, 0 0 30px #FF0000; }
+    20% { text-shadow: 0 0 20px #00FF00, 0 0 30px #00FF00; }
+    40% { text-shadow: 0 0 20px #0000FF, 0 0 30px #0000FF; }
+    60% { text-shadow: 0 0 20px #FFFF00, 0 0 30px #FFFF00; }
+    80% { text-shadow: 0 0 20px #FF00FF, 0 0 30px #FF00FF; }
+    100% { text-shadow: 0 0 20px #FF0000, 0 0 30px #FF0000; }
+}
+#playBtn, #restartBtn, #trainingBtn {
+    padding: 10px 20px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 10px;
+    width: 30%;
+    min-width: 150px;
+    max-width: 300px;
+}
+
+#playBtn:hover, #restartBtn:hover, #trainingBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#restartBtn {
+    position: fixed;
+    left: 50%;
+    top: 60%;
+    transform: translate(-50%, -50%);
+    display: none;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.2);
+    border: 0px solid rgba(255, 255, 255, 0.8);
+}
+
+#restartBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#colorPanel {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: none;
+    gap: 15px;
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 50;
+}
+.color-option {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+.color-option:hover {
+    transform: scale(1.1);
+}
+.color-option.active {
+    transform: scale(1.2);
+    border-color: white;
+}
+#stats {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+#waveAnnouncement {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 48px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.7);
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+}
+
+#pauseBtn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    display: none;
+}
+
+#pauseBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#pauseText {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 72px;
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(255,255,255,0.7);
+    display: none;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#waveSelector {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 100;
+}
+
+.wave-button {
+    padding: 5px 15px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.wave-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.wave-button.active {
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#homeBtn {
+    position: fixed;
+    top: 20px;
+    right: 100px; /* Увеличили отступ с 90px до 100px для создания пространства 10px */
+    padding: 10px 20px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 0px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 100;
+    display: none;
+}
+
+#homeBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
