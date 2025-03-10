@@ -349,11 +349,10 @@ class Enemy {
 
 // Helper functions for UI
 function announceWave(waveNumber) {
+    waveAnnouncement.style.animation = 'none';
+    waveAnnouncement.offsetHeight; // Форсируем перерасчет стилей
     waveAnnouncement.textContent = `Волна ${waveNumber}`;
-    waveAnnouncement.style.opacity = '1';
-    setTimeout(() => {
-        waveAnnouncement.style.opacity = '0';
-    }, 2000);
+    waveAnnouncement.style.animation = 'announceWave 2s ease-in-out forwards';
 }
 
 // Удаляем функцию drawDefenseLine и добавляем новую
@@ -371,14 +370,25 @@ function drawDefenseZone() {
     });
 }
 
+function formatTime(ms) {
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / 1000 / 60) % 60);
+    const hours = Math.floor(ms / 1000 / 60 / 60);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
 function updateStats() {
     const currentWaveConfig = waves[currentWave - 1];
     const killsNeeded = currentWaveConfig.killsToNext;
     const progress = isTrainingMode ? 
         `Прогресс волны: ${score.killsThisWave}/${killsNeeded}` : '';
+    
+    const gameTime = formatTime(Date.now() - startTime);
 
     stats.innerHTML = `
         ${isTrainingMode ? 'Режим: Тренировка<br>' : ''}
+        Время: ${gameTime}<br>
         Волна: ${currentWave}<br>
         ${isTrainingMode ? progress + '<br>' : ''}
         Очки: ${score.killed}<br>

@@ -2,7 +2,7 @@ body {
     margin: 0;
     overflow: hidden;
     background: #000;
-    font-family: Arial, sans-serif;
+    font-family: 'Consolas', 'Monaco', monospace;
     user-select: none;
 }
 canvas {
@@ -20,7 +20,7 @@ canvas {
 }
 #gameTitle {
     color: #fff;
-    font-size: 72px;
+    font-size: 96px;
     text-shadow: 0 0 20px rgba(255,255,255,0.7);
     margin-bottom: 40px;
     text-align: center;
@@ -34,13 +34,13 @@ canvas {
     80% { text-shadow: 0 0 20px #FF00FF, 0 0 30px #FF00FF; }
     100% { text-shadow: 0 0 20px #FF0000, 0 0 30px #FF0000; }
 }
-#playBtn, #restartBtn, #trainingBtn {
+#playBtn, #restartBtn, #trainingBtn, #howToPlayBtn, #closeInstructionsBtn {
     padding: 10px 20px;
     font-size: 20px;
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid rgba(255, 255, 255, 0.8);
-    border-radius: 5px;
+    border-radius: 25px; /* Максимальное закругление */
     cursor: pointer;
     transition: all 0.3s;
     margin: 10px;
@@ -49,7 +49,7 @@ canvas {
     max-width: 300px;
 }
 
-#playBtn:hover, #restartBtn:hover, #trainingBtn:hover {
+#playBtn:hover, #restartBtn:hover, #trainingBtn:hover, #howToPlayBtn:hover {
     background: rgba(255, 255, 255, 0.3);
 }
 
@@ -109,11 +109,31 @@ canvas {
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-size: 48px;
+    font-size: 72px;
     text-shadow: 0 0 20px rgba(255,255,255,0.7);
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: none;
     pointer-events: none;
+    animation: announceWave 2s ease-in-out forwards;
+}
+
+@keyframes announceWave {
+    0% {
+        opacity: 0;
+        transform: translate(-200%, -50%);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(100%, -50%);
+    }
 }
 
 #pauseBtn {
@@ -174,7 +194,7 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid white;
-    border-radius: 3px;
+    border-radius: 25px; /* Максимальное закругление */
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -215,7 +235,7 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid rgba(255, 255, 255, 0.8);
-    border-radius: 5px;
+    border-radius: 25px; /* Максимальное закругление */
     cursor: pointer;
     transition: all 0.3s;
     margin: 10px;
@@ -280,7 +300,7 @@ canvas {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 0px solid white;
-    border-radius: 5px;
+    border-radius: 25px; /* Максимальное закругление */
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -349,6 +369,7 @@ canvas {
     min-width: 180px; /* Соответствует ширине кнопки */
     transform: translateX(50%); /* Центрируем относительно кнопки */
     right: 270px; /* Выравниваем под кнопкой */
+    width: 200px; /* Фиксированная ширина слайдера */
 }
 
 #autoFireDistance {
