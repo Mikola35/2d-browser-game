@@ -945,15 +945,12 @@ function gameLoop() {
         ctx.textAlign = 'center';
         
         if(gameOver) {
-            // Изменяем отображение сообщения о проигрыше
             ctx.fillStyle = '#FF0000';
-            ctx.font = 'bold 120px Consolas'; // Используем моноширинный шрифт
+            ctx.font = 'bold 120px Consolas';
             ctx.fillText('ПОРАЖЕНИЕ', canvas.width/2, canvas.height/2 - 100);
             
-            // Статистика тоже моноширинным шрифтом
+            // Статистика без пульсации
             ctx.font = '24px Consolas';
-            
-            // Статистика
             ctx.fillStyle = '#FFFFFF';
             const gameTime = formatTime(Date.now() - startTime);
             const accuracy = Math.round((score.hits / score.shots || 0) * 100);
@@ -962,15 +959,19 @@ function gameLoop() {
             ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
             ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         } else if(gameWon && !isTrainingMode) {
-            // Победный текст тоже моноширинным шрифтом
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2 - 100);
+            // Пульсация для текста победы
+            const pulseScale = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+            ctx.scale(pulseScale, pulseScale);
+            
             ctx.fillStyle = '#00FF00';
             ctx.font = 'bold 120px Consolas';
-            ctx.fillText('ПОБЕДА!', canvas.width/2, canvas.height/2 - 100);
+            ctx.fillText('ПОБЕДА!', 0, 0);
+            ctx.restore();
             
-            // Статистика тоже моноширинным шрифтом 
+            // Статистика без пульсации
             ctx.font = '24px Consolas';
-            
-            // Статистика
             ctx.fillStyle = '#FFFFFF';
             const gameTime = formatTime(Date.now() - startTime);
             const accuracy = Math.round((score.hits / score.shots || 0) * 100);
