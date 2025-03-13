@@ -86,6 +86,9 @@ let movementKeys = {
     'KeyD': false
 };
 
+// Добавляем после других переменных состояния игры
+let isDragging = false;
+
 // Game state variables
 let enemies = [];
 let projectiles = [];
@@ -766,6 +769,14 @@ function initializeGame() {
             angle = -Math.atan2(dy, dx) + Math.PI/2;
             isManualControl = true;
         }
+
+        if (isDragging) {
+            const rect = canvas.getBoundingClientRect();
+            targetX = Math.min(Math.max(e.clientX - rect.left, CONFIG.cannon.movement.margin), 
+                canvas.width - CONFIG.cannon.movement.margin);
+            targetY = Math.min(Math.max(e.clientY - rect.top, CONFIG.cannon.movement.margin), 
+                canvas.height - CONFIG.cannon.movement.margin);
+        }
     };
     window.addEventListener('mousemove', mouseMoveHandler);
     eventHandlers.set('mousemove', mouseMoveHandler);
@@ -828,11 +839,12 @@ function initializeGame() {
     const mouseDownHandler = (e) => {
         if (e.button === 1) { // Средняя кнопка мыши
             e.preventDefault();
+            isDragging = true;
             const rect = canvas.getBoundingClientRect();
-            const margin = CONFIG.cannon.movement.margin;
-            // Правильно вычисляем координаты с учетом размеров канваса
-            targetX = Math.min(Math.max(e.clientX - rect.left, margin), canvas.width - margin);
-            targetY = Math.min(Math.max(e.clientY - rect.top, margin), canvas.height - margin);
+            targetX = Math.min(Math.max(e.clientX - rect.left, CONFIG.cannon.movement.margin), 
+                canvas.width - CONFIG.cannon.movement.margin);
+            targetY = Math.min(Math.max(e.clientY - rect.top, CONFIG.cannon.movement.margin), 
+                canvas.height - CONFIG.cannon.movement.margin);
         }
     };
     window.addEventListener('mousedown', mouseDownHandler);
@@ -968,6 +980,15 @@ function initializeGame() {
     };
     window.addEventListener('keyup', keyUpHandler);
     eventHandlers.set('keyup', keyUpHandler);
+
+    // Добавляем обработчик отпускания кнопки мыши
+    const mouseUpHandler = (e) => {
+        if (e.button === 1) { // Средняя кнопка мыши
+            isDragging = false;
+        }
+    };
+    window.addEventListener('mouseup', mouseUpHandler);
+    eventHandlers.set('mouseup', mouseUpHandler);
 }
 
 function startGame() {
@@ -1491,7 +1512,7 @@ function updateCannonPosition() {
         if (movementKeys.KeyD) targetX = Math.min(targetX + speed, canvas.width - CONFIG.cannon.movement.margin);
 
         // Плавное перемещение к цели с использованием настроек из конфига
-        const smoothing = CONFIG.cannon.movement.smoothing;
+        const smoothing = isDragging ? 0.25 : CONFIG.cannon.movement.smoothing;
         cannonX += (targetX - cannonX) * smoothing;
         cannonY += (targetY - cannonY) * smoothing;
     }
