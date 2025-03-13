@@ -2,7 +2,7 @@
 const CONFIG = {
     // Настройки пушки
     cannon: {
-        shootDelay: 10,       // Задержка между выстрелами (мс)
+        shootDelay: 20,       // Задержка между выстрелами (мс)
         barrelLength: 80,     // Длина ствола
         baseWidth: 60,        // Ширина основания
         baseHeight: 40,       // Высота основания
@@ -62,41 +62,41 @@ const CONFIG = {
         },
         explosion: {
             particleCount: 25,  // Количество частиц при взрыве
-            speedMultiplier: 1.5 // Множитель скорости частиц
+            speedMultiplier: 2.5 // Увеличиваем множитель для более заметного эффекта взрыва
         }
     },
 
-    // Настройки волн
+    // Настройки волн - более реалистичные значения
     waves: [
         {
-            killsToNext: 1,   // Сколько врагов нужно убить для перехода
-            count: 1,         // Максимум врагов на экране
-            speed: 10,          // Базовая скорость врагов
-            spawnRate: 10    // Частота появления врагов (мс)
+            killsToNext: 10,    // Первая волна - легкая
+            count: 10,          // Увеличили до 5 врагов одновременно
+            speed: 2.5,        // Медленная скорость
+            spawnRate: 1000    // Редкий спавн
         },
         {
-            killsToNext: 1,
-            count: 0,
-            speed: 1.5,
-            spawnRate: 100
+            killsToNext: 10,
+            count: 10,
+            speed: 2.8,
+            spawnRate: 1800
         },
         {
-            killsToNext: 1,
-            count: 0,
-            speed: 2,
-            spawnRate: 100
+            killsToNext: 10,
+            count: 10,
+            speed: 2.0,
+            spawnRate: 1500
         },
         {
-            killsToNext: 6,
-            count: 0,
-            speed: 2.5,
-            spawnRate: 100
+            killsToNext: 10,
+            count: 5,
+            speed: 1.2,
+            spawnRate: 1200
         },
         {
             killsToNext: 5,
-            count: 0,
-            speed: 3,
-            spawnRate: 100
+            count: 2,
+            speed: 1.0,
+            spawnRate: 1000
         }
     ],
 

@@ -132,13 +132,9 @@ count - максимальное количество врагов на экра
 speed - множитель скорости врагов (1.0 = базовая скорость)
 spawnRate - частота появления врагов в миллисекундах (чем меньше, тем чаще)
 */
-const waves = [
-    {killsToNext: 10, count: 10, speed: 1, spawnRate: 1000},   // Нужно убить 10 врагов
-    {killsToNext: 9, count: 9, speed: 1.5, spawnRate: 2000}, // Нужно убить 10 врагов
-    {killsToNext: 7, count: 7, speed: 2, spawnRate: 3000},   // Нужно убить 10 врагов
-    {killsToNext: 6, count: 6, speed: 2.5, spawnRate: 5000}, // Нужно убить 10 врагов
-    {killsToNext: 5, count: 5, speed: 3, spawnRate: 10000}    // Нужно убить 10 врагов
-];
+
+// Используем конфигурацию из CONFIG
+const waves = CONFIG.waves;
 
 // Добавляем константу для радиуса защитной зоны после game configuration
 const DEFENSE_RADIUS = 200; // Радиус защитной зоны вокруг пушки
@@ -297,8 +293,8 @@ class Enemy {
         this.x = padding + Math.random() * (canvas.width - padding * 2);
         this.y = height; // Спавним точно в зоне спавна
 
-        // Модифицируем скорость с учетом множителя
-        this.speed = waves[currentWave - 1].speed * this.speedMultiplier * 
+        // Модифицируем скорость с учетом множителя из CONFIG.waves
+        this.speed = CONFIG.waves[currentWave - 1].speed * this.speedMultiplier * 
             (sizesConfig.medium.radius / this.radius);
         this.shape = Math.floor(Math.random() * 4); // 0: круг, 1: квадрат, 2: треугольник, 3: ромб
         
@@ -995,7 +991,7 @@ function gameLoop() {
             lastFrameTime = currentTime;
             // Спавним врагов только если игра не выиграна
             if(!gameWon && currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
-               (isTrainingMode || enemies.length < waves[currentWave - 1].count)) {
+               enemies.length < waves[currentWave - 1].count) {
                 enemies.push(new Enemy());
                 lastSpawn = currentTime;
             }
@@ -1067,48 +1063,37 @@ function gameLoop() {
         stats.style.display = 'none';
         autoShootBtn.style.display = 'none';
 
+        // Показываем кнопку "Играть снова"
+        restartBtn.style.display = 'block';
+        restartBtn.style.top = '70%';
+
         ctx.textAlign = 'center';
+        const duration = formatTime(gameTime);
+        const accuracy = Math.round((score.hits / score.shots || 0) * 100);
         
         if(gameOver) {
+            // Поражение
             ctx.fillStyle = '#FF0000';
             ctx.font = 'bold 120px Consolas';
             ctx.fillText('ПОРАЖЕНИЕ', canvas.width/2, canvas.height/2 - 100);
-            
-            // Статистика без пульсации
-            ctx.font = '24px Consolas';
-            ctx.fillStyle = '#FFFFFF';
-            const duration = formatTime(gameTime); // Используем gameTime вместо Date.now() - startTime
-            
-            ctx.fillText(`Длительность игры: ${duration}`, canvas.width/2, canvas.height/2);
-            ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
-            ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         } else if(gameWon && !isTrainingMode) {
+            // Победа
             ctx.save();
             ctx.translate(canvas.width/2, canvas.height/2 - 100);
-            // Пульсация для текста победы
             const pulseScale = 1 + Math.sin(Date.now() * 0.002) * 0.1;
             ctx.scale(pulseScale, pulseScale);
-            
             ctx.fillStyle = '#00FF00';
             ctx.font = 'bold 120px Consolas';
             ctx.fillText('ПОБЕДА!', 0, 0);
             ctx.restore();
-            
-            // Статистика без пульсации
-            ctx.font = '24px Consolas';
-            ctx.fillStyle = '#FFFFFF';
-            const duration = formatTime(gameTime); // Используем gameTime вместо Date.now() - startTime
-            
-            ctx.fillText(`Длительность игры: ${duration}`, canvas.width/2, canvas.height/2);
-            ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
-            ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         }
-        
-        // Отображаем кнопку "Играть снова" только при проигрыше или победе в боевом режиме
-        if (gameOver || (gameWon && !isTrainingMode)) {
-            restartBtn.style.display = 'block';
-            restartBtn.style.top = '70%';
-        }
+
+        // Отображаем статистику
+        ctx.font = '24px Consolas';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(`Длительность игры: ${duration}`, canvas.width/2, canvas.height/2);
+        ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
+        ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
     }
     
     requestAnimationFrame(gameLoop);
