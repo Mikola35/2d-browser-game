@@ -26,7 +26,8 @@ const KEYS = {
     RIGHT: 'ArrowRight',
     UP: 'ArrowUp',
     DOWN: 'ArrowDown',
-    SPACE: ' '
+    SPACE: ' ',
+    ESCAPE: 'Escape'  // Добавляем клавишу ESC
 };
 
 // Добавляем состояние клавиш
@@ -37,7 +38,7 @@ const keyState = {
 };
 
 // Скорость поворота при управлении клавиатурой (радиан/кадр)
-const KEYBOARD_ROTATION_SPEED = 0.05;
+const KEYBOARD_ROTATION_SPEED = 0.02; // Уменьшили с 0.05 до 0.02 для более плавного поворота
 
 // Get DOM elements
 const canvas = document.getElementById('game');
@@ -798,6 +799,12 @@ function initializeGame() {
 
     // Добавляем обработчики клавиатуры
     window.addEventListener('keydown', (e) => {
+        if (e.key === KEYS.ESCAPE) {
+            isPaused = !isPaused;
+            pauseText.style.display = isPaused ? 'block' : 'none';
+            return;
+        }
+
         if (isPaused) return;
 
         switch (e.key) {
