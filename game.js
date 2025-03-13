@@ -20,6 +20,25 @@ let isManualControl = true;
 const autoShootBtn = document.getElementById('autoShootBtn');
 let isAutoShootEnabled = false;
 
+// Добавляем константы для клавиш управления
+const KEYS = {
+    LEFT: 'ArrowLeft',
+    RIGHT: 'ArrowRight',
+    UP: 'ArrowUp',
+    DOWN: 'ArrowDown',
+    SPACE: ' '
+};
+
+// Добавляем состояние клавиш
+const keyState = {
+    [KEYS.LEFT]: false,
+    [KEYS.RIGHT]: false,
+    [KEYS.SPACE]: false
+};
+
+// Скорость поворота при управлении клавиатурой (радиан/кадр)
+const KEYBOARD_ROTATION_SPEED = 0.05;
+
 // Get DOM elements
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -730,6 +749,32 @@ function initializeGame() {
     });
 
     autoShootBtn.style.display = 'none'; // Кнопка скрыта при старте
+
+    // Добавляем обработчики клавиатуры
+    window.addEventListener('keydown', (e) => {
+        if (isPaused) return;
+
+        switch (e.key) {
+            case KEYS.LEFT:
+            case KEYS.RIGHT:
+            case KEYS.SPACE:
+                keyState[e.key] = true;
+                isManualControl = true;
+                break;
+            case KEYS.UP:
+                changeColor('left');
+                break;
+            case KEYS.DOWN:
+                changeColor('right');
+                break;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (keyState.hasOwnProperty(e.key)) {
+            keyState[e.key] = false;
+        }
+    });
 }
 
 function startGame() {
@@ -908,6 +953,8 @@ function gameLoop() {
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
+            handleKeyboardRotation(); // Добавляем обработку поворота с клавиатуры
+            handleKeyboardShooting(); // Добавляем обработку стрельбы
             handlePatrol(); // Переименовали вызов
             handleAutoShoot(); // Добавляем вызов функции
             const currentTime = Date.now();
@@ -1193,5 +1240,21 @@ function handleAutoShoot() {
         if (now - lastShot > CONFIG.auto.autoShoot.delay) {
             shoot();
         }
+    }
+}
+
+function handleKeyboardRotation() {
+    if (keyState[KEYS.LEFT]) {
+        angle -= KEYBOARD_ROTATION_SPEED;
+    }
+    if (keyState[KEYS.RIGHT]) {
+        angle += KEYBOARD_ROTATION_SPEED;
+    }
+}
+
+// Добавляем функцию для обработки стрельбы с клавиатуры
+function handleKeyboardShooting() {
+    if (keyState[KEYS.SPACE]) {
+        shoot();
     }
 }

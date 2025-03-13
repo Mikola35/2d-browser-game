@@ -280,6 +280,28 @@ canvas {
     text-shadow: 0 0 10px rgba(255,255,255,0.5);
 }
 
+.instructions-content h3 {
+    color: #fff;
+    margin: 25px 0 15px 0;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.instruction-group {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.instruction-group li {
+    margin: 10px 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .instructions-content ul {
     list-style: none;
     padding: 0;
