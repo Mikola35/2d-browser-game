@@ -1,3 +1,5 @@
+import CONFIG from './config.js';
+
 // Добавим в начало файла переменную режима
 let isTrainingMode = false;
 
@@ -109,11 +111,11 @@ speed - множитель скорости врагов (1.0 = базовая �
 spawnRate - частота появления врагов в миллисекундах (чем меньше, тем чаще)
 */
 const waves = [
-    {killsToNext: 10, count: 10, speed: 1, spawnRate: 100},   // Нужно убить 10 врагов
-    {killsToNext: 9, count: 9, speed: 1.5, spawnRate: 200}, // Нужно убить 10 врагов
-    {killsToNext: 7, count: 7, speed: 2, spawnRate: 300},   // Нужно убить 10 врагов
-    {killsToNext: 6, count: 6, speed: 2.5, spawnRate: 500}, // Нужно убить 10 врагов
-    {killsToNext: 5, count: 5, speed: 3, spawnRate: 1000}    // Нужно убить 10 врагов
+    {killsToNext: 10, count: 10, speed: 1, spawnRate: 1000},   // Нужно убить 10 врагов
+    {killsToNext: 9, count: 9, speed: 1.5, spawnRate: 2000}, // Нужно убить 10 врагов
+    {killsToNext: 7, count: 7, speed: 2, spawnRate: 3000},   // Нужно убить 10 врагов
+    {killsToNext: 6, count: 6, speed: 2.5, spawnRate: 5000}, // Нужно убить 10 врагов
+    {killsToNext: 5, count: 5, speed: 3, spawnRate: 10000}    // Нужно убить 10 врагов
 ];
 
 // Добавляем константу для радиуса защитной зоны после game configuration
@@ -737,7 +739,7 @@ function initializeGame() {
     patrolDistance.addEventListener('input', (e) => {
         const value = e.target.value;
         patrolDistanceValue.textContent = `${value}%`;
-        // Обновляем градиент для Chrome
+        // Обновляем градиент для Chrome    
         const gradient = `linear-gradient(to right, rgba(255, 255, 255, 1) ${value}%, rgba(255, 255, 255, 0.2) ${value}%)`;
         e.target.style.background = gradient;
     });
@@ -786,16 +788,12 @@ function startGame() {
 
 function shoot() {
     const now = Date.now();
-    // Было: минимальная задержка 50мс, базовая задержка 250мс
-    // Сделаем минимальную задержку 10мс, базовую 100мс
-    const minDelay = Math.max(10, 100 - wheelSpeed * 10);
-    
-    if(now - lastShot > minDelay) {
+    if(now - lastShot > CONFIG.cannon.shootDelay) {
         projectiles.push(new Projectile(
-            cannonX + Math.sin(angle) * 60,
-            cannonY - Math.cos(angle) * 60,
+            cannonX + Math.sin(angle) * CONFIG.cannon.barrelLength,
+            cannonY - Math.cos(angle) * CONFIG.cannon.barrelLength,
             angle,
-            colors[currentColorIndex]
+            CONFIG.colors[currentColorIndex]
         ));
         score.shots++;
         lastShot = now;
