@@ -80,7 +80,6 @@ let wheelSpeed = 0; // Добавляем переменную для отсле
 let lastWheelTime = 0; // Время последней прокрутки
 
 // Game configuration
-const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
 let activeEnemyColors = []; // Массив для отслеживания текущих цветов врагов
 
 function getRandomActiveColor() {
@@ -89,8 +88,8 @@ function getRandomActiveColor() {
     
     // Если активных цветов меньше 3, добавляем новый цвет
     if (currentColors.length < 3) {
-        // Фильтруем цвета, которые еще не используются
-        const unusedColors = colors.filter(c => !currentColors.includes(c));
+        // Фильтруем цвета, исключая белый цвет (первый в массиве) и уже используемые цвета
+        const unusedColors = CONFIG.colors.slice(1).filter(c => !currentColors.includes(c));
         // Если есть неиспользуемые цвета, выбираем случайный
         if (unusedColors.length > 0) {
             return unusedColors[Math.floor(Math.random() * unusedColors.length)];
@@ -100,7 +99,7 @@ function getRandomActiveColor() {
     // Если уже есть 3 цвета или нет новых, используем один из текущих
     return currentColors.length > 0 
         ? currentColors[Math.floor(Math.random() * currentColors.length)]
-        : colors[Math.floor(Math.random() * colors.length)];
+        : CONFIG.colors[1 + Math.floor(Math.random() * (CONFIG.colors.length - 1))]; // Исключаем белый цвет
 }
 
 /*
@@ -145,15 +144,15 @@ class Projectile {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.speed = 32;
+        this.speed = CONFIG.projectile.speed; // Было 32
         this.vx = Math.sin(angle) * this.speed;
         this.vy = -Math.cos(angle) * this.speed;
-        this.radius = 8;
+        this.radius = CONFIG.projectile.radius;
         // Добавляем массив для хвоста
         this.trail = [];
-        this.trailLength = 6; // Длина хвоста (количество точек)
-        this.width = 4;  // Ширина лазерного луча
-        this.length = 4; // Длина лазерного луча
+        this.trailLength = CONFIG.projectile.trailLength; // Длина хвоста (количество точек)
+        this.width = CONFIG.projectile.width;  // Ширина лазерного луча
+        this.length = CONFIG.projectile.length; // Длина лазерного луча
     }
 
     update() {
@@ -206,9 +205,9 @@ class Particle {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.size = Math.random() * 3 + 2;
+        this.size = Math.random() * (CONFIG.particles.maxSize - CONFIG.particles.minSize) + CONFIG.particles.minSize;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 6 + 2;
+        const speed = Math.random() * (CONFIG.particles.maxSpeed - CONFIG.particles.minSpeed) + CONFIG.particles.minSpeed;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.alpha = 1;
@@ -219,8 +218,8 @@ class Particle {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.1;
-        this.life -= 0.02;
+        this.vy += CONFIG.particles.gravity; // Было 0.1
+        this.life -= CONFIG.particles.fadeSpeed; // Было 0.02
         this.alpha = this.life;
         
         if (this.life <= 0) {
@@ -267,8 +266,11 @@ class Enemy {
             this.speedMultiplier = 0.8; // Большие враги медленнее
         }
 
-        this.x = Math.random() * (canvas.width - 2 * this.radius) + this.radius;
-        this.y = -this.radius;
+        // Заменяем эти строки:
+        const { padding, height } = CONFIG.debug.spawnArea;
+        this.x = padding + Math.random() * (canvas.width - padding * 2);
+        this.y = height; // Спавним точно в зоне спавна
+
         // Модифицируем скорость с учетом множителя
         this.speed = waves[currentWave - 1].speed * this.speedMultiplier * 
             (sizesConfig.medium.radius / this.radius);
@@ -321,11 +323,11 @@ class Enemy {
 
     explode() {
         // Увеличиваем количество частиц для более заметного взрыва
-        for(let i = 0; i < 50; i++) {
+        for(let i = 0; i < CONFIG.enemies.explosion.particleCount; i++) {
             const particle = new Particle(this.x, this.y, this.color);
             // Добавляем большую скорость частицам
-            particle.vx *= 1.5;
-            particle.vy *= 1.5;
+            particle.vx *= CONFIG.enemies.explosion.speedMultiplier;
+            particle.vy *= CONFIG.enemies.explosion.speedMultiplier;
             particles.push(particle);
         }
     }
@@ -349,9 +351,9 @@ class Enemy {
                     // Сразу создаем части пушки и отключаем отрисовку оригинальной пушки
                     gameOver = true;
                     const pieces = [
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'barrel'),
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'base'),
-                        new CannonPiece(cannonX, cannonY, colors[currentColorIndex], 'circle')
+                        new CannonPiece(cannonX, cannonY, CONFIG.colors[currentColorIndex], 'barrel'),
+                        new CannonPiece(cannonX, cannonY, CONFIG.colors[currentColorIndex], 'base'),
+                        new CannonPiece(cannonX, cannonY, CONFIG.colors[currentColorIndex], 'circle')
                     ];
                     cannonPieces.push(...pieces);
                     setTimeout(() => gameOver = true, 1500);
@@ -480,34 +482,37 @@ function updateStats() {
     `;
 }
 
+// Изменяем функцию getActiveColors
 function getActiveColors() {
-    // Если врагов нет, просто возвращаем последний активный цвет
+    // Получаем уникальный массив цветов активных врагов
+    const enemyColors = [...new Set(enemies.map(enemy => enemy.color))];
+    
+    // Если врагов нет совсем, используем только белый цвет
     if (enemies.length === 0) {
-        return [colors[currentColorIndex]];
+        return [CONFIG.colors[0]]; // Возвращаем белый цвет (первый в массиве)
     }
-    // Иначе возвращаем цвета активных врагов
-    return [...new Set(enemies.map(enemy => enemy.color))];
+
+    // Если текущий цвет не соответствует ни одному врагу на поле
+    // и есть другие цвета врагов, переключаемся на первый доступный цвет врага
+    if (!enemyColors.includes(CONFIG.colors[currentColorIndex]) && enemyColors.length > 0) {
+        currentColorIndex = CONFIG.colors.indexOf(enemyColors[0]);
+    }
+    
+    // Возвращаем только цвета активных врагов
+    return enemyColors;
 }
 
 function createColorPanel() {
     colorPanel.innerHTML = '';
     const activeColors = getActiveColors();
     
-    // Автоматически переключаемся на цвет первого врага, если это первый враг
-    if (enemies.length === 1) {
-        currentColorIndex = colors.indexOf(enemies[0].color);
-    }
-    // Если текущий цвет не в списке активных цветов, добавляем его
-    else if (!activeColors.includes(colors[currentColorIndex])) {
-        activeColors.push(colors[currentColorIndex]);
-    }
-    
+    // Создаем цветовые опции только для активных цветов
     activeColors.forEach(color => {
         const div = document.createElement('div');
-        div.className = `color-option ${color === colors[currentColorIndex] ? 'active' : ''}`;
+        div.className = `color-option ${color === CONFIG.colors[currentColorIndex] ? 'active' : ''}`;
         div.style.background = color;
         div.onclick = () => {
-            currentColorIndex = colors.indexOf(color);
+            currentColorIndex = CONFIG.colors.indexOf(color);
             updateColorPanel();
         };
         colorPanel.appendChild(div);
@@ -535,8 +540,13 @@ function drawCannon() {
         
         // Draw laser sight first (under the cannon)
         const lineLength = Math.max(canvas.width, canvas.height) * 2;
+        // Используем тот же цвет, что и для выстрелов
+        const cannonColor = enemies.length === 0 ? 
+            CONFIG.colors[0] : // Белый цвет (первый в массиве)
+            CONFIG.colors[currentColorIndex];
+            
         ctx.beginPath();
-        ctx.strokeStyle = colors[currentColorIndex] + '20';
+        ctx.strokeStyle = cannonColor + '20';
         ctx.lineWidth = 2;
         ctx.moveTo(0, -baseHeight - barrelLength);
         ctx.lineTo(0, -lineLength);
@@ -559,7 +569,7 @@ function drawCannon() {
         ctx.fill();
 
         // Draw barrel with tapering
-        ctx.fillStyle = colors[currentColorIndex];
+        ctx.fillStyle = cannonColor; // Используем тот же цвет для дула
         ctx.beginPath();
         ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
         ctx.lineTo(barrelBaseWidth/2, -baseHeight);
@@ -789,11 +799,16 @@ function startGame() {
 function shoot() {
     const now = Date.now();
     if(now - lastShot > CONFIG.cannon.shootDelay) {
+        // Если нет врагов, стреляем белым цветом, иначе - текущим цветом
+        const shootColor = enemies.length === 0 ? 
+            CONFIG.colors[0] : // Белый цвет (первый в массиве)
+            CONFIG.colors[currentColorIndex];
+
         projectiles.push(new Projectile(
             cannonX + Math.sin(angle) * CONFIG.cannon.barrelLength,
             cannonY - Math.cos(angle) * CONFIG.cannon.barrelLength,
             angle,
-            CONFIG.colors[currentColorIndex]
+            shootColor
         ));
         score.shots++;
         lastShot = now;
@@ -868,8 +883,59 @@ function updateWaveButtons() {
     });
 }
 
+// Добавляем после других вспомогательных функций
+function drawDebugGrid() {
+    if (!CONFIG.debug.enabled) return;
+
+    const { grid, spawnArea } = CONFIG.debug;
+    
+    // Рисуем сетку
+    ctx.beginPath();
+    ctx.strokeStyle = grid.color;
+    ctx.lineWidth = grid.lineWidth;
+
+    // Вертикальные линии
+    for (let x = 0; x < canvas.width; x += grid.size) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+    }
+
+    // Горизонтальные линии
+    for (let y = 0; y < canvas.height; y += grid.size) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+    }
+    
+    ctx.stroke();
+
+    // Заменяем отрисовку зоны спавна:
+    ctx.beginPath();
+    ctx.strokeStyle = spawnArea.color;
+    ctx.lineWidth = spawnArea.lineWidth;
+    ctx.rect(
+        spawnArea.padding,
+        0,  // Начинаем от верха экрана
+        canvas.width - spawnArea.padding * 2,
+        spawnArea.height // Используем заданную высоту
+    );
+    ctx.stroke();
+
+    // Показываем координаты спавна
+    ctx.fillStyle = spawnArea.color;
+    ctx.font = '14px Consolas';
+    ctx.fillText(
+        `Spawn Area (${spawnArea.padding}, 0) - (${canvas.width - spawnArea.padding}, ${spawnArea.height})`,
+        spawnArea.padding,
+        spawnArea.height + 20
+    );
+}
+
+// Изменяем функцию gameLoop, добавляя вызов drawDebugGrid в начало отрисовки
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Добавляем отрисовку сетки до всех остальных элементов
+    drawDebugGrid();
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
@@ -1010,16 +1076,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function changeColor(direction) {
     const activeColors = getActiveColors();
-    const currentIndex = activeColors.indexOf(colors[currentColorIndex]);
+    const currentIndex = activeColors.indexOf(CONFIG.colors[currentColorIndex]);
     
     if (direction === 'left') {
         // Движение влево по массиву цветов
         const newIndex = (currentIndex - 1 + activeColors.length) % activeColors.length;
-        currentColorIndex = colors.indexOf(activeColors[newIndex]);
+        currentColorIndex = CONFIG.colors.indexOf(activeColors[newIndex]);
     } else {
         // Движение вправо по массиву цветов
         const newIndex = (currentIndex + 1) % activeColors.length;
-        currentColorIndex = colors.indexOf(activeColors[newIndex]);
+        currentColorIndex = CONFIG.colors.indexOf(activeColors[newIndex]);
     }
     updateColorPanel();
 }
@@ -1074,7 +1140,7 @@ function handlePatrol() {
     const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
 
     if (closestEnemy && minDistance < maxRange) {
-        const enemyColorIndex = colors.indexOf(closestEnemy.color);
+        const enemyColorIndex = CONFIG.colors.indexOf(closestEnemy.color);
         if (enemyColorIndex !== currentColorIndex) {
             currentColorIndex = enemyColorIndex;
             updateColorPanel();
@@ -1088,7 +1154,7 @@ function handlePatrol() {
         basePatrolAngle = angle;
     } else {
         // Плавное патрулирование с использованием косинуса
-        targetAngle = basePatrolAngle + Math.cos(Date.now() * PATROL_SPEED) * PATROL_RANGE;
+        targetAngle = basePatrolAngle + Math.cos(Date.now() * CONFIG.auto.patrol.speed) * CONFIG.auto.patrol.range;
     }
 
     // Плавный поворот к цели
@@ -1108,7 +1174,7 @@ function smoothRotateToTarget() {
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
     
     // Добавляем плавное замедление при приближении к цели
-    const rotationAmount = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), ROTATION_SPEED);
+    const rotationAmount = Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), CONFIG.auto.patrol.rotationSpeed);
     
     angle += rotationAmount;
     
@@ -1123,7 +1189,7 @@ function handleAutoShoot() {
 
     // Находим врага, на которого указывает пушка
     let targetEnemy = null;
-    let minAngleDiff = Math.PI / 8; // Максимальное отклонение 22.5 градуса
+    let minAngleDiff = CONFIG.auto.targeting.angleThreshold;
     let minRealDistance = Infinity; // Добавляем проверку реального расстояния
 
     enemies.forEach(enemy => {
@@ -1147,7 +1213,7 @@ function handleAutoShoot() {
 
     // Если нашли врага в направлении пушки, меняем цвет
     if (targetEnemy) {
-        const enemyColorIndex = colors.indexOf(targetEnemy.color);
+        const enemyColorIndex = CONFIG.colors.indexOf(targetEnemy.color);
         if (enemyColorIndex !== currentColorIndex) {
             currentColorIndex = enemyColorIndex;
             updateColorPanel();
@@ -1155,7 +1221,7 @@ function handleAutoShoot() {
 
         // Стреляем только когда цвет совпадает
         const now = Date.now();
-        if (now - lastShot > 100) {
+        if (now - lastShot > CONFIG.auto.autoShoot.delay) {
             shoot();
         }
     }
