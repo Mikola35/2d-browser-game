@@ -55,13 +55,13 @@ const CONFIG = {
                 chance: { min: 0.2, max: 0.8 }
             },
             large: {
-                radius: 30,
+                radius: 35,
                 speedMultiplier: 0.8,  // Большие враги медленнее
                 chance: { min: 0.6, max: 0.0 }
             }
         },
         explosion: {
-            particleCount: 50,  // Количество частиц при взрыве
+            particleCount: 25,  // Количество частиц при взрыве
             speedMultiplier: 1.5 // Множитель скорости частиц
         }
     },
@@ -72,31 +72,31 @@ const CONFIG = {
             killsToNext: 10,   // Сколько врагов нужно убить для перехода
             count: 10,         // Максимум врагов на экране
             speed: 1,          // Базовая скорость врагов
-            spawnRate: 1000    // Частота появления врагов (мс)
+            spawnRate: 100    // Частота появления врагов (мс)
         },
         {
             killsToNext: 9,
             count: 9,
             speed: 1.5,
-            spawnRate: 2000
+            spawnRate: 200
         },
         {
             killsToNext: 7,
             count: 7,
             speed: 2,
-            spawnRate: 3000
+            spawnRate: 300
         },
         {
             killsToNext: 6,
             count: 6,
             speed: 2.5,
-            spawnRate: 5000
+            spawnRate: 500
         },
         {
             killsToNext: 5,
             count: 5,
             speed: 3,
-            spawnRate: 10000
+            spawnRate: 1000
         }
     ],
 
@@ -134,12 +134,12 @@ const CONFIG = {
     // Цвета лазеров и врагов
     colors: [
         '#FFFFFF', // Белый (добавляем в начало массива)
-        '#FF0000', // Красный
-        '#00FF00', // Зеленый
-        '#0000FF', // Синий
-        '#FFFF00', // Желтый
-        '#FF00FF', // Пурпурный
-        '#00FFFF'  // Голубой
+        '#960EF1', // 1
+        '#002EFA', // 2
+        '#00EDF5', // 3
+        '#6DF10E', // 4
+        '#FAC800', // 5
+        '#F50400'  // 6
     ],
 
     // Добавляем настройки отладочной сетки
@@ -151,7 +151,7 @@ const CONFIG = {
             lineWidth: 1         // Толщина линий
         },
         spawnArea: {
-            color: '#FF0000',    // Цвет зоны спавна
+            color: '#590B0B',    // Цвет зоны спавна
             lineWidth: 1,        // Толщина границы
             padding: 500,        // Уменьшаем отступ с 1000 до 500
             height: 50           // Добавляем высоту зоны спавна
