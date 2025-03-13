@@ -69,34 +69,34 @@ const CONFIG = {
     // Настройки волн
     waves: [
         {
-            killsToNext: 10,   // Сколько врагов нужно убить для перехода
-            count: 10,         // Максимум врагов на экране
-            speed: 1,          // Базовая скорость врагов
-            spawnRate: 100    // Частота появления врагов (мс)
+            killsToNext: 1,   // Сколько врагов нужно убить для перехода
+            count: 1,         // Максимум врагов на экране
+            speed: 10,          // Базовая скорость врагов
+            spawnRate: 10    // Частота появления врагов (мс)
         },
         {
-            killsToNext: 9,
-            count: 9,
+            killsToNext: 1,
+            count: 0,
             speed: 1.5,
-            spawnRate: 200
+            spawnRate: 100
         },
         {
-            killsToNext: 7,
-            count: 7,
+            killsToNext: 1,
+            count: 0,
             speed: 2,
-            spawnRate: 300
+            spawnRate: 100
         },
         {
             killsToNext: 6,
-            count: 6,
+            count: 0,
             speed: 2.5,
-            spawnRate: 500
+            spawnRate: 100
         },
         {
             killsToNext: 5,
-            count: 5,
+            count: 0,
             speed: 3,
-            spawnRate: 1000
+            spawnRate: 100
         }
     ],
 
@@ -153,7 +153,7 @@ const CONFIG = {
         spawnArea: {
             color: '#590B0B',    // Цвет зоны спавна
             lineWidth: 1,        // Толщина границы
-            padding: 500,        // Уменьшаем отступ с 1000 до 500
+            padding: 100,        // Уменьшаем отступ с 1000 до 500
             height: 50           // Добавляем высоту зоны спавна
         }
     }

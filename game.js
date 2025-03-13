@@ -70,13 +70,17 @@ const ROTATION_SPEED = 0.05; // Уменьшаем скорость поворо
 // Добавляем после других переменных состояния игры
 let basePatrolAngle = 0; // Базовый угол для патрулирования
 
+// В начале файла после других переменных состояния игры добавляем:
+let startTime;
+let gameTime = 0; // Общее время игры
+let lastFrameTime; // Время последнего кадра для расчета дельты
+
 // Game state variables
 let enemies = [];
 let projectiles = [];
 let particles = [];
 let gameOver = false;
 let gameWon = false;
-let startTime;
 let spawnRate = 3000;
 let lastSpawn = 0;
 let angle = 0;
@@ -510,12 +514,12 @@ function updateStats() {
     const progress = isTrainingMode ? 
         `Прогресс волны: ${score.killsThisWave}/${killsNeeded}` : '';
     
-    const gameTime = formatTime(Date.now() - startTime);
+    const currentTime = formatTime(gameTime); // Используем gameTime вместо Date.now() - startTime
     const accuracy = Math.round((score.hits / score.shots || 0) * 100);
 
     stats.innerHTML = `
         ${isTrainingMode ? 'Режим: Тренировка<br>' : ''}
-        Время: ${gameTime}<br>
+        Длительность: ${currentTime}<br>
         Волна: ${currentWave}<br>
         ${isTrainingMode ? progress + '<br>' : ''}
         Врагов на экране: ${enemies.length}/${currentWaveConfig.count}<br>
@@ -811,6 +815,8 @@ function startGame() {
     homeBtn.style.display = 'block'; // Показываем кнопку возврата
     autoShootBtn.style.display = 'block'; // Показываем кнопку только в игре
     startTime = Date.now();
+    lastFrameTime = startTime;
+    gameTime = 0;
     score.killsThisWave = 0; // Добавляем счетчик убийств для текущей волны
     announceWave(currentWave);
     activeEnemyColors = []; // Очищаем массив активных цветов
@@ -984,6 +990,9 @@ function gameLoop() {
             handlePatrol(); // Переименовали вызов
             handleAutoShoot(); // Добавляем вызов функции
             const currentTime = Date.now();
+            const deltaTime = currentTime - lastFrameTime;
+            gameTime += deltaTime;
+            lastFrameTime = currentTime;
             // Спавним врагов только если игра не выиграна
             if(!gameWon && currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
                (isTrainingMode || enemies.length < waves[currentWave - 1].count)) {
@@ -1068,10 +1077,9 @@ function gameLoop() {
             // Статистика без пульсации
             ctx.font = '24px Consolas';
             ctx.fillStyle = '#FFFFFF';
-            const gameTime = formatTime(Date.now() - startTime);
-            const accuracy = Math.round((score.hits / score.shots || 0) * 100);
+            const duration = formatTime(gameTime); // Используем gameTime вместо Date.now() - startTime
             
-            ctx.fillText(`Время игры: ${gameTime}`, canvas.width/2, canvas.height/2);
+            ctx.fillText(`Длительность игры: ${duration}`, canvas.width/2, canvas.height/2);
             ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
             ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         } else if(gameWon && !isTrainingMode) {
@@ -1089,10 +1097,9 @@ function gameLoop() {
             // Статистика без пульсации
             ctx.font = '24px Consolas';
             ctx.fillStyle = '#FFFFFF';
-            const gameTime = formatTime(Date.now() - startTime);
-            const accuracy = Math.round((score.hits / score.shots || 0) * 100);
+            const duration = formatTime(gameTime); // Используем gameTime вместо Date.now() - startTime
             
-            ctx.fillText(`Время игры: ${gameTime}`, canvas.width/2, canvas.height/2);
+            ctx.fillText(`Длительность игры: ${duration}`, canvas.width/2, canvas.height/2);
             ctx.fillText(`Уничтожено врагов: ${score.killed}`, canvas.width/2, canvas.height/2 + 40);
             ctx.fillText(`Точность: ${accuracy}%`, canvas.width/2, canvas.height/2 + 80);
         }
