@@ -482,8 +482,28 @@ function announceWave(waveNumber) {
 
 // Удаляем функцию drawDefenseLine и добавляем новую
 function drawDefenseZone() {
+    // Сперва рисуем область патрулирования, если она активна
+    if (isPatrolEnabled && isTrainingMode) {
+        const percent = parseInt(patrolDistance.value) / 100;
+        const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
+        
+        // Создаем градиент от пушки до maxRange
+        const gradient = ctx.createRadialGradient(
+            cannonX, cannonY, DEFENSE_RADIUS,
+            cannonX, cannonY, maxRange
+        );
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+
+        // Рисуем градиентную область
+        ctx.beginPath();
+        ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
+
+    // Рисуем защитные кольца как обычно
     rings.forEach(ring => {
-        // Рисуем только видимые кольца
         if (ring.active && !ring.invisible) {
             ctx.beginPath();
             ctx.arc(cannonX, cannonY, ring.radius, 0, Math.PI * 2);
