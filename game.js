@@ -76,6 +76,16 @@ let startTime;
 let gameTime = 0; // Общее время игры
 let lastFrameTime; // Время последнего кадра для расчета дельты
 
+// После других переменных состояния игры добавляем:
+let targetX = 0;
+let targetY = 0;
+let movementKeys = {
+    'KeyW': false,
+    'KeyS': false,
+    'KeyA': false,
+    'KeyD': false
+};
+
 // Game state variables
 let enemies = [];
 let projectiles = [];
@@ -157,6 +167,9 @@ const ENEMY_CONFIG = {
     },
     speedMultiplier: 1.0 // Множитель скорости для маленьких врагов
 };
+
+// В начало файла добавляем:
+const eventHandlers = new Map();
 
 // Game classes
 class Projectile {
@@ -314,6 +327,10 @@ class Enemy {
         this.vy = (dy / distance) * this.speed;
         
         score.totalEnemies++;
+
+        // Добавляем сохранение целевой позиции
+        this.targetX = cannonX;
+        this.targetY = cannonY;
     }
 
     draw() {
@@ -366,6 +383,53 @@ class Enemy {
 
         ctx.fill();
         ctx.restore();
+
+        // Добавляем отрисовку отладочной информации
+        if (CONFIG.debug.enabled && isTrainingMode) {
+            // Сохраняем контекст перед отрисовкой отладки
+            ctx.save();
+            
+            // Рисуем пунктирную линию от врага к цели
+            ctx.beginPath();
+            ctx.setLineDash(CONFIG.debug.enemies.pathDash);
+            ctx.strokeStyle = CONFIG.debug.enemies.pathColor + '80'; // Добавляем прозрачность
+            ctx.lineWidth = 1;
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.targetX, this.targetY);
+            ctx.stroke();
+            
+            // Рисуем стрелку направления движения
+            const angle = Math.atan2(this.vy, this.vx);
+            const arrowLength = CONFIG.debug.enemies.arrowLength;
+            const endX = this.x + Math.cos(angle) * arrowLength;
+            const endY = this.y + Math.sin(angle) * arrowLength;
+            
+            // Рисуем основную линию стрелки
+            ctx.beginPath();
+            ctx.setLineDash([]);
+            ctx.strokeStyle = CONFIG.debug.enemies.arrowColor;
+            ctx.lineWidth = CONFIG.debug.enemies.arrowWidth;
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(endX, endY);
+            
+            // Рисуем наконечник стрелки
+            const headLength = arrowLength / 3;
+            const headAngle = Math.PI / 6; // 30 градусов
+            
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(
+                endX - headLength * Math.cos(angle - headAngle),
+                endY - headLength * Math.sin(angle - headAngle)
+            );
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(
+                endX - headLength * Math.cos(angle + headAngle),
+                endY - headLength * Math.sin(angle + headAngle)
+            );
+            ctx.stroke();
+            
+            ctx.restore();
+        }
     }
 
     explode(projectile = null) {
@@ -389,24 +453,40 @@ class Enemy {
                 angle = Math.random() * Math.PI * 2;
             }
 
-            const particle = new Particle(
-                this.x, 
-                this.y, 
-                this.color, 
-                angle,
-                projectile ? particleConfig.speedMultiplier * 1.5 : particleConfig.speedMultiplier
-            );
-            particles.push(particle);
+            if (particles.length < CONFIG.limits.maxParticles) {
+                const particle = new Particle(
+                    this.x, 
+                    this.y, 
+                    this.color, 
+                    angle,
+                    projectile ? particleConfig.speedMultiplier * 1.5 : particleConfig.speedMultiplier
+                );
+                particles.push(particle);
+            }
         }
     }
 
     update() {
+        // Обновляем целевую позицию
+        this.targetX = cannonX;
+        this.targetY = cannonY;
+
+        // Обновляем вектор направления к текущей позиции пушки
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Обновляем скорость движения
+        this.vx = (dx / distance) * this.speed;
+        this.vy = (dy / distance) * this.speed;
+        
+        // Применяем движение
         this.x += this.vx;
         this.y += this.vy;
 
-        const dx = this.x - cannonX;
-        const dy = this.y - cannonY;
-        const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+        const dx2 = this.x - cannonX;
+        const dy2 = this.y - cannonY;
+        const distanceToCenter = Math.sqrt(dx2 * dx2 + dy2 * dy2);
         
         // Проверяем столкновение с кольцами от внешнего к внутреннему
         for (let i = rings.length - 1; i >= 0; i--) {
@@ -679,19 +759,21 @@ function initializeGame() {
     cannonY = canvas.height - CONFIG.cannon.position.y - CONFIG.cannon.position.elevation;
     
     // Event listeners
-    window.addEventListener('mousemove', (e) => {
+    const mouseMoveHandler = (e) => {
         if (!isPatrolEnabled || !isTrainingMode) {
             const dx = e.clientX - cannonX;
             const dy = cannonY - e.clientY;
             angle = -Math.atan2(dy, dx) + Math.PI/2;
             isManualControl = true;
         }
-    });
+    };
+    window.addEventListener('mousemove', mouseMoveHandler);
+    eventHandlers.set('mousemove', mouseMoveHandler);
     
     // Удаляем старые обработчики mousedown и mouseup
     
     // Обновляем обработчик колесика
-    window.addEventListener('wheel', (e) => {
+    const wheelHandler = (e) => {
         e.preventDefault();
         // Если включен автоогонь, игнорируем прокрутку
         if (isPatrolEnabled && isTrainingMode) return;
@@ -715,10 +797,12 @@ function initializeGame() {
         for(let i = 0; i < shots; i++) {
             shoot();
         }
-    }, { passive: false }); // Добавляем этот параметр
+    };
+    window.addEventListener('wheel', wheelHandler, { passive: false }); // Добавляем этот параметр
+    eventHandlers.set('wheel', wheelHandler);
 
     // Заменяем обработчик клика
-    window.addEventListener('click', (e) => {
+    const clickHandler = (e) => {
         // Если клик был по ссылке, не делаем ничего
         if (e.target.tagName === 'A') {
             return;
@@ -728,20 +812,40 @@ function initializeGame() {
         if (e.button === 0) { // Левая кнопка мыши
             changeColor('left');
         }
-    });
+    };
+    window.addEventListener('click', clickHandler);
+    eventHandlers.set('click', clickHandler);
 
-    // Изменяем обработчик правой кнопки для смены цвета вправо
-    window.addEventListener('contextmenu', (e) => {
+    // Заменяем обработчик правой кнопки мыши
+    const contextMenuHandler = (e) => {
         e.preventDefault();
         changeColor('right');
-    });
-    
-    window.addEventListener('resize', () => {
+    };
+    window.addEventListener('contextmenu', contextMenuHandler);
+    eventHandlers.set('contextmenu', contextMenuHandler);
+
+    // Изменяем обработчик средней кнопки мыши
+    const mouseDownHandler = (e) => {
+        if (e.button === 1) { // Средняя кнопка мыши
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const margin = CONFIG.cannon.movement.margin;
+            // Правильно вычисляем координаты с учетом размеров канваса
+            targetX = Math.min(Math.max(e.clientX - rect.left, margin), canvas.width - margin);
+            targetY = Math.min(Math.max(e.clientY - rect.top, margin), canvas.height - margin);
+        }
+    };
+    window.addEventListener('mousedown', mouseDownHandler);
+    eventHandlers.set('mousedown', mouseDownHandler);
+
+    const resizeHandler = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         cannonX = canvas.width * CONFIG.cannon.position.x;
         cannonY = canvas.height - CONFIG.cannon.position.y - CONFIG.cannon.position.elevation;
-    });
+    };
+    window.addEventListener('resize', resizeHandler);
+    eventHandlers.set('resize', resizeHandler);
     
     createColorPanel();
     
@@ -822,7 +926,7 @@ function initializeGame() {
     autoShootBtn.style.display = 'none'; // Кнопка скрыта при старте
 
     // Добавляем обработчики клавиатуры
-    window.addEventListener('keydown', (e) => {
+    const keyDownHandler = (e) => {
         if (e.key === KEYS.ESCAPE) {
             isPaused = !isPaused;
             pauseText.style.display = isPaused ? 'block' : 'none';
@@ -845,13 +949,25 @@ function initializeGame() {
                 changeColor('right');
                 break;
         }
-    });
 
-    window.addEventListener('keyup', (e) => {
+        if (movementKeys.hasOwnProperty(e.code)) {
+            movementKeys[e.code] = true;
+        }
+    };
+    window.addEventListener('keydown', keyDownHandler);
+    eventHandlers.set('keydown', keyDownHandler);
+
+    const keyUpHandler = (e) => {
         if (keyState.hasOwnProperty(e.key)) {
             keyState[e.key] = false;
         }
-    });
+
+        if (movementKeys.hasOwnProperty(e.code)) {
+            movementKeys[e.code] = false;
+        }
+    };
+    window.addEventListener('keyup', keyUpHandler);
+    eventHandlers.set('keyup', keyUpHandler);
 }
 
 function startGame() {
@@ -886,10 +1002,15 @@ function startGame() {
         // Восстанавливаем все кольца, кроме последнего невидимого
         ring.active = index === rings.length - 1 ? false : true;
     }); // Восстанавливаем все кольца
+    targetX = cannonX;
+    targetY = cannonY;
     gameLoop();
 }
 
 function shoot() {
+    if (projectiles.length >= CONFIG.limits.maxProjectiles) {
+        return;
+    }
     const now = Date.now();
     if(now - lastShot > CONFIG.cannon.shootDelay) {
         // Если нет врагов, стреляем белым цветом, иначе - текущим цветом
@@ -909,27 +1030,50 @@ function shoot() {
 }
 
 function checkCollisions() {
-    for(let i = projectiles.length - 1; i >= 0; i--) {
-        const proj = projectiles[i];
+    // Создаем сетку для оптимизации
+    const grid = new Map();
+    const cellSize = 50;
+    
+    // Распределяем врагов по ячейкам
+    enemies.forEach(enemy => {
+        const cellX = Math.floor(enemy.x / cellSize);
+        const cellY = Math.floor(enemy.y / cellSize);
+        const key = `${cellX},${cellY}`;
+        if (!grid.has(key)) {
+            grid.set(key, []);
+        }
+        grid.get(key).push(enemy);
+    });
+
+    // Проверяем коллизии только с врагами в соседних ячейках
+    projectiles.forEach((proj, i) => {
+        const cellX = Math.floor(proj.x / cellSize);
+        const cellY = Math.floor(proj.y / cellSize);
         
-        for(let j = enemies.length - 1; j >= 0; j--) {
-            const enemy = enemies[j];
-            const dx = proj.x - enemy.x;
-            const dy = proj.y - enemy.y;
-            const distance = Math.sqrt(dx*dx + dy*dy);
-            
-            if(distance < enemy.radius + proj.radius && proj.color === enemy.color) {
-                enemy.explode(proj); // Передаем снаряд в метод explode
-                enemies.splice(j, 1);
-                projectiles.splice(i, 1);
-                score.killed++;
-                score.points += 100 * currentWave; // Начисляем очки с учетом номера волны
-                score.hits++;
-                score.killsThisWave++; // Увеличиваем счетчик убийств текущей волны
-                break;
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                const key = `${cellX + dx},${cellY + dy}`;
+                const cellEnemies = grid.get(key);
+                if (!cellEnemies) continue;
+                
+                cellEnemies.forEach((enemy, j) => {
+                    const dx = proj.x - enemy.x;
+                    const dy = proj.y - enemy.y;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if(distance < enemy.radius + proj.radius && proj.color === enemy.color) {
+                        enemy.explode(proj); // Передаем снаряд в метод explode
+                        enemies.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score.killed++;
+                        score.points += 100 * currentWave; // Начисляем очки с учетом номера волны
+                        score.hits++;
+                        score.killsThisWave++; // Увеличиваем счетчик убийств текущей волны
+                    }
+                });
             }
         }
-    }
+    });
 
     // Проверяем условие перехода на следующую волну
     if (score.killsThisWave >= waves[currentWave - 1].killsToNext) {
@@ -1049,7 +1193,7 @@ function gameLoop() {
                 currentWaveConfig.spawnRate;     // Иначе обычную задержку
             
             if (!gameWon && currentTime - lastSpawn > spawnDelay && 
-               enemies.length < currentWaveConfig.count) {
+               enemies.length < Math.min(currentWaveConfig.count, CONFIG.limits.maxEnemies)) {
                 enemies.push(new Enemy());
                 lastSpawn = currentTime;
             }
@@ -1089,6 +1233,7 @@ function gameLoop() {
             
             checkCollisions();
             drawDefenseZone(); // Заменяем drawDefenseLine на drawDefenseZone
+            updateCannonPosition(); // Добавляем эту строку перед drawCannon
             drawCannon();
             updateStats();
 
@@ -1335,6 +1480,23 @@ function handleKeyboardShooting() {
     }
 }
 
+// В функции updateCannonPosition меняем W и S
+function updateCannonPosition() {
+    if (!gameOver && !isPaused) {
+        // Обработка WASD с инвертированным W/S
+        const speed = CONFIG.cannon.movement.keyboardSpeed; // Используем замедленную скорость для клавиатуры
+        if (movementKeys.KeyS) targetY = Math.min(targetY + speed, canvas.height - CONFIG.cannon.movement.margin);
+        if (movementKeys.KeyW) targetY = Math.max(targetY - speed, CONFIG.cannon.movement.margin);
+        if (movementKeys.KeyA) targetX = Math.max(targetX - speed, CONFIG.cannon.movement.margin);
+        if (movementKeys.KeyD) targetX = Math.min(targetX + speed, canvas.width - CONFIG.cannon.movement.margin);
+
+        // Плавное перемещение к цели с использованием настроек из конфига
+        const smoothing = CONFIG.cannon.movement.smoothing;
+        cannonX += (targetX - cannonX) * smoothing;
+        cannonY += (targetY - cannonY) * smoothing;
+    }
+}
+
 // Добавляем вспомогательные функции для отрисовки фигур
 function drawPolygon(x, y, radius, sides) {
     ctx.beginPath();
@@ -1359,4 +1521,12 @@ function drawStar(x, y, outerRadius, innerRadius, spikes) {
         else ctx.lineTo(px, py);
     }
     ctx.closePath();
+}
+
+// Добавляем функцию очистки обработчиков событий
+function cleanup() {
+    eventHandlers.forEach((handler, event) => {
+        window.removeEventListener(event, handler);
+    });
+    eventHandlers.clear();
 }

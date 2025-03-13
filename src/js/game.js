@@ -287,12 +287,29 @@ class Enemy {
     }
 
     update() {
+        // Обновляем направление движения к пушке
+        const dx = cannonX - this.x;
+        const dy = cannonY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Обновляем вектор скорости для движения к текущей позиции пушки
+        this.vx = (dx / distance) * this.speed;
+        this.vy = (dy / distance) * this.speed;
+        
         this.x += this.vx;
         this.y += this.vy;
 
-        const dx = this.x - cannonX;
-        const dy = this.y - cannonY;
-        const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+        // Удаляем врага только если он очень далеко за пределами экрана
+        if (this.x < -100 || this.x > canvas.width + 100 || 
+            this.y < -100 || this.y > canvas.height + 100) {
+            return true;
+        }
+
+        // Проверка столкновения с кольцами
+        const distanceToCenter = Math.sqrt(
+            Math.pow(this.x - cannonX, 2) + 
+            Math.pow(this.y - cannonY, 2)
+        );
         
         // Проверяем столкновение с кольцами от внешнего к внутреннему
         for (let i = rings.length - 1; i >= 0; i--) {
