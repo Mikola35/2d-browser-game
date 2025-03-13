@@ -220,18 +220,21 @@ class Projectile {
 }
 
 class Particle {
-    constructor(x, y, color) {
+    constructor(x, y, color, angle, speedMultiplier = 1) {
         this.x = x;
         this.y = y;
         this.color = color;
         this.size = Math.random() * (CONFIG.particles.maxSize - CONFIG.particles.minSize) + CONFIG.particles.minSize;
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * (CONFIG.particles.maxSpeed - CONFIG.particles.minSpeed) + CONFIG.particles.minSpeed;
+        
+        // Используем переданный угол и множитель скорости
+        const speed = (Math.random() * (CONFIG.particles.maxSpeed - CONFIG.particles.minSpeed) + 
+                      CONFIG.particles.minSpeed) * speedMultiplier;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
+        
         this.alpha = 1;
         this.life = 1;
-        this.isDead = false; // добавляем флаг для корректного удаления
+        this.isDead = false;
     }
 
     update() {
@@ -340,13 +343,34 @@ class Enemy {
         ctx.fill();
     }
 
-    explode() {
-        // Увеличиваем количество частиц для более заметного взрыва
-        for(let i = 0; i < CONFIG.enemies.explosion.particleCount; i++) {
-            const particle = new Particle(this.x, this.y, this.color);
-            // Добавляем большую скорость частицам
-            particle.vx *= CONFIG.enemies.explosion.speedMultiplier;
-            particle.vy *= CONFIG.enemies.explosion.speedMultiplier;
+    explode(projectile = null) {
+        // Если есть projectile, то это уничтожение от пули
+        const particleConfig = {
+            count: CONFIG.enemies.explosion.particleCount,
+            speedMultiplier: CONFIG.enemies.explosion.speedMultiplier,
+            angleSpread: projectile ? Math.PI / 4 : Math.PI * 2, // Угол разброса частиц
+            baseAngle: projectile ? Math.atan2(projectile.vy, projectile.vx) : 0 // Направление пули
+        };
+
+        for(let i = 0; i < particleConfig.count; i++) {
+            // Вычисляем угол для частицы
+            let angle;
+            if (projectile) {
+                // При попадании пули - в направлении её полёта с небольшим разбросом
+                angle = particleConfig.baseAngle - particleConfig.angleSpread/2 + 
+                       Math.random() * particleConfig.angleSpread;
+            } else {
+                // При столкновении - во все стороны
+                angle = Math.random() * Math.PI * 2;
+            }
+
+            const particle = new Particle(
+                this.x, 
+                this.y, 
+                this.color, 
+                angle,
+                projectile ? particleConfig.speedMultiplier * 1.5 : particleConfig.speedMultiplier
+            );
             particles.push(particle);
         }
     }
@@ -487,6 +511,7 @@ function updateStats() {
         `Прогресс волны: ${score.killsThisWave}/${killsNeeded}` : '';
     
     const gameTime = formatTime(Date.now() - startTime);
+    const accuracy = Math.round((score.hits / score.shots || 0) * 100);
 
     stats.innerHTML = `
         ${isTrainingMode ? 'Режим: Тренировка<br>' : ''}
@@ -497,7 +522,8 @@ function updateStats() {
         Уничтожено: ${score.killed}<br>
         Очки: ${score.points}<br>
         Пропущено: ${score.missed}<br>
-        Точность: ${Math.round((score.hits / score.shots || 0) * 100)}%
+        Выстрелов: ${score.shots}<br>
+        Точность: ${accuracy}%
     `;
 }
 
@@ -560,7 +586,7 @@ function drawCannon() {
         ctx.beginPath();
         ctx.strokeStyle = cannonColor + '20';
         ctx.lineWidth = 2;
-        ctx.moveTo(0, -cfg.baseHeight - cfg.barrelLength);
+        ctx.moveTo(0, -cfg.baseHeight + cfg.barrelLength);
         ctx.lineTo(0, -lineLength);
         ctx.stroke();
         
@@ -840,7 +866,7 @@ function checkCollisions() {
             const distance = Math.sqrt(dx*dx + dy*dy);
             
             if(distance < enemy.radius + proj.radius && proj.color === enemy.color) {
-                enemy.explode();
+                enemy.explode(proj); // Передаем снаряд в метод explode
                 enemies.splice(j, 1);
                 projectiles.splice(i, 1);
                 score.killed++;
