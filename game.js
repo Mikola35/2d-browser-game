@@ -297,7 +297,11 @@ class Enemy {
         // Модифицируем скорость с учетом множителя из CONFIG.waves
         this.speed = CONFIG.waves[currentWave - 1].speed * this.speedMultiplier * 
             (sizesConfig.medium.radius / this.radius);
-        this.shape = Math.floor(Math.random() * 4); // 0: круг, 1: квадрат, 2: треугольник, 3: ромб
+        // Заменяем выбор формы на более разнообразный
+        this.shape = Math.floor(Math.random() * 5); // 5 разных форм вместо 6
+        this.rotation = Math.random() * Math.PI * 2; // Добавляем случайный поворот
+        this.spikes = 3 + Math.floor(Math.random() * 4); // От 3 до 6 шипов для звезды
+        this.alpha = 0.9 + Math.random() * 0.1; // Добавляем случайную прозрачность (90-100%)
         
         // Заменяем логику выбора цвета
         this.color = getRandomActiveColor();
@@ -313,35 +317,55 @@ class Enemy {
     }
 
     draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha = this.alpha; // Устанавливаем прозрачность
         ctx.fillStyle = this.color;
         ctx.beginPath();
 
         switch(this.shape) {
             case 0: // Круг
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 break;
             
-            case 1: // Квадрат
-                ctx.rect(this.x - this.radius, this.y - this.radius, 
-                        this.radius * 2, this.radius * 2);
+            case 1: // Треугольник
+                drawPolygon(0, 0, this.radius, 3);
                 break;
             
-            case 2: // Треугольник
-                ctx.moveTo(this.x, this.y - this.radius);
-                ctx.lineTo(this.x + this.radius, this.y + this.radius);
-                ctx.lineTo(this.x - this.radius, this.y + this.radius);
+            case 2: // Ромб
+                ctx.moveTo(0, -this.radius);
+                ctx.lineTo(this.radius, 0);
+                ctx.lineTo(0, this.radius);
+                ctx.lineTo(-this.radius, 0);
                 break;
-            
-            case 3: // Ромб
-                ctx.moveTo(this.x, this.y - this.radius);
-                ctx.lineTo(this.x + this.radius, this.y);
-                ctx.lineTo(this.x, this.y + this.radius);
-                ctx.lineTo(this.x - this.radius, this.y);
+
+            case 3: // Звезда
+                drawStar(0, 0, this.radius, this.radius/2, this.spikes);
+                break;
+
+            case 4: // Крест-снежинка
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * Math.PI * 2) / 5;
+                    const thickness = this.radius / 6;
+                    
+                    ctx.save();
+                    ctx.rotate(angle);
+                    
+                    // Рисуем луч креста
+                    ctx.moveTo(-thickness, 0);
+                    ctx.lineTo(thickness, 0);
+                    ctx.lineTo(thickness, -this.radius);
+                    ctx.lineTo(-thickness, -this.radius);
+                    ctx.closePath();
+                    
+                    ctx.restore();
+                }
                 break;
         }
 
-        ctx.closePath();
         ctx.fill();
+        ctx.restore();
     }
 
     explode(projectile = null) {
@@ -1003,8 +1027,10 @@ function drawDebugGrid() {
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Добавляем отрисовку сетки до всех остальных элементов
-    drawDebugGrid();
+    // Рисуем сетку только если игра активна и не на паузе
+    if(!gameOver && !gameWon && !isPaused) {
+        drawDebugGrid();
+    }
     
     if(!gameOver && !gameWon) {
         if (!isPaused) {
@@ -1016,9 +1042,14 @@ function gameLoop() {
             const deltaTime = currentTime - lastFrameTime;
             gameTime += deltaTime;
             lastFrameTime = currentTime;
-            // Спавним врагов только если игра не выиграна
-            if(!gameWon && currentTime - lastSpawn > waves[currentWave - 1].spawnRate && 
-               enemies.length < waves[currentWave - 1].count) {
+            // Новая логика спавна
+            const currentWaveConfig = waves[currentWave - 1];
+            const spawnDelay = enemies.length === 0 ? 
+                currentWaveConfig.minSpawnRate : // Используем минимальную задержку если врагов нет
+                currentWaveConfig.spawnRate;     // Иначе обычную задержку
+            
+            if (!gameWon && currentTime - lastSpawn > spawnDelay && 
+               enemies.length < currentWaveConfig.count) {
                 enemies.push(new Enemy());
                 lastSpawn = currentTime;
             }
@@ -1074,7 +1105,7 @@ function gameLoop() {
             updateStats();
         }
     } else {
-        // Продолжаем обновлять и отрисовывать частицы и части пушки
+        // Убираем отладочную графику на финальных экранах
         particles.forEach(particle => particle.update());
         particles = particles.filter(particle => !particle.isDead);
         particles.forEach(particle => particle.draw());
@@ -1302,4 +1333,30 @@ function handleKeyboardShooting() {
     if (keyState[KEYS.SPACE]) {
         shoot();
     }
+}
+
+// Добавляем вспомогательные функции для отрисовки фигур
+function drawPolygon(x, y, radius, sides) {
+    ctx.beginPath();
+    for (let i = 0; i < sides; i++) {
+        const angle = (i * 2 * Math.PI / sides) - Math.PI / 2;
+        const px = x + radius * Math.cos(angle);
+        const py = y + radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+}
+
+function drawStar(x, y, outerRadius, innerRadius, spikes) {
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const angle = (i * Math.PI / spikes) - Math.PI / 2;
+        const px = x + radius * Math.cos(angle);
+        const py = y + radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
 }
