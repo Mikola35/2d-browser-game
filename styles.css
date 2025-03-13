@@ -19,12 +19,14 @@ canvas {
     background: #000;
 }
 #gameTitle {
-    color: #fff;
+    color: #000;
     font-size: 96px;
     text-shadow: 0 0 20px rgba(255,255,255,0.7);
     margin-bottom: 40px;
     text-align: center;
     animation: glowSpectrum 8s infinite linear;
+    line-height: 1.2;
+    letter-spacing: 2px;
 }
 @keyframes glowSpectrum {
     0% { text-shadow: 0 0 20px #FF0000, 0 0 30px #FF0000; }
