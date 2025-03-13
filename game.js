@@ -527,81 +527,49 @@ function updateColorPanel() {
 
 function drawCannon() {
     if (!gameOver) {
-        const baseWidth = 60;
-        const baseHeight = 40;
-        const barrelLength = 80; // Увеличили длину с 60 до 80
-        const barrelBaseWidth = 20; // Ширина у основания
-        const barrelTipWidth = 10; // Ширина у кончика дула (меньше чем у основания)
-        const baseRadius = 55;
+        const cfg = CONFIG.cannon;
+        const cannonColor = enemies.length === 0 ? 
+            CONFIG.colors[0] : 
+            CONFIG.colors[currentColorIndex];
         
         ctx.save();
         ctx.translate(cannonX, cannonY);
         ctx.rotate(angle);
         
-        // Draw laser sight first (under the cannon)
+        // Draw laser sight
         const lineLength = Math.max(canvas.width, canvas.height) * 2;
-        // Используем тот же цвет, что и для выстрелов
-        const cannonColor = enemies.length === 0 ? 
-            CONFIG.colors[0] : // Белый цвет (первый в массиве)
-            CONFIG.colors[currentColorIndex];
-            
         ctx.beginPath();
         ctx.strokeStyle = cannonColor + '20';
         ctx.lineWidth = 2;
-        ctx.moveTo(0, -baseHeight - barrelLength);
+        ctx.moveTo(0, -cfg.baseHeight - cfg.barrelLength);
         ctx.lineTo(0, -lineLength);
         ctx.stroke();
         
         // Draw circular base
-        ctx.fillStyle = '#666';
+        ctx.fillStyle = cfg.colors.circle;
         ctx.beginPath();
-        ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
+        ctx.arc(0, 0, cfg.baseRadius, 0, Math.PI * 2);
         ctx.fill();
         
         // Draw base
-        ctx.fillStyle = '#888';
+        ctx.fillStyle = cfg.colors.base;
         ctx.beginPath();
-        ctx.moveTo(-baseWidth/2, 0);
-        ctx.lineTo(baseWidth/2, 0);
-        ctx.lineTo(baseWidth/3, -baseHeight);
-        ctx.lineTo(-baseWidth/3, -baseHeight);
+        ctx.moveTo(-cfg.baseWidth/2, 0);
+        ctx.lineTo(cfg.baseWidth/2, 0);
+        ctx.lineTo(cfg.baseWidth/3, -cfg.baseHeight);
+        ctx.lineTo(-cfg.baseWidth/3, -cfg.baseHeight);
         ctx.closePath();
         ctx.fill();
 
         // Draw barrel with tapering
-        ctx.fillStyle = cannonColor; // Используем тот же цвет для дула
+        ctx.fillStyle = cannonColor; // Динамический цвет для ствола
         ctx.beginPath();
-        ctx.moveTo(-barrelBaseWidth/2, -baseHeight);
-        ctx.lineTo(barrelBaseWidth/2, -baseHeight);
-        ctx.lineTo(barrelTipWidth/2, -baseHeight - barrelLength);
-        ctx.lineTo(-barrelTipWidth/2, -baseHeight - barrelLength);
+        ctx.moveTo(-cfg.barrelBaseWidth/2, -cfg.baseHeight);
+        ctx.lineTo(cfg.barrelBaseWidth/2, -cfg.baseHeight);
+        ctx.lineTo(cfg.barrelTipWidth/2, -cfg.baseHeight - cfg.barrelLength);
+        ctx.lineTo(-cfg.barrelTipWidth/2, -cfg.baseHeight - cfg.barrelLength);
         ctx.closePath();
         ctx.fill();
-        
-        // Draw auto-fire range if enabled
-        if (isPatrolEnabled && isTrainingMode) {
-            const percent = parseInt(patrolDistance.value) / 100;
-            const maxRange = percent * (canvas.height - DEFENSE_RADIUS) + DEFENSE_RADIUS;
-            
-            ctx.save();
-            ctx.resetTransform();
-            
-            // Создаем радиальный градиент
-            const gradient = ctx.createRadialGradient(
-                cannonX, cannonY, DEFENSE_RADIUS, // Внутренний круг
-                cannonX, cannonY, maxRange        // Внешний круг
-            );
-            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
-            
-            // Рисуем заполненный круг с градиентом
-            ctx.beginPath();
-            ctx.arc(cannonX, cannonY, maxRange, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
-            ctx.fill();
-            
-            ctx.restore();
-        }
         
         ctx.restore();
     }
@@ -616,8 +584,9 @@ function initializeGame() {
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    cannonX = canvas.width / 2;
-    cannonY = canvas.height - 100;
+    // Используем настройки из конфига для позиционирования пушки
+    cannonX = canvas.width * CONFIG.cannon.position.x;
+    cannonY = canvas.height - CONFIG.cannon.position.y - CONFIG.cannon.position.elevation;
     
     // Event listeners
     window.addEventListener('mousemove', (e) => {
@@ -680,8 +649,8 @@ function initializeGame() {
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        cannonX = canvas.width / 2;
-        cannonY = canvas.height - 100;
+        cannonX = canvas.width * CONFIG.cannon.position.x;
+        cannonY = canvas.height - CONFIG.cannon.position.y - CONFIG.cannon.position.elevation;
     });
     
     createColorPanel();
