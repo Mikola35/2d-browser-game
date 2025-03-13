@@ -646,7 +646,7 @@ function initializeGame() {
         for(let i = 0; i < shots; i++) {
             shoot();
         }
-    });
+    }, { passive: false }); // Добавляем этот параметр
 
     // Заменяем обработчик клика
     window.addEventListener('click', (e) => {
