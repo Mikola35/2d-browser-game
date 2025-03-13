@@ -1055,19 +1055,23 @@ function checkCollisions() {
     const grid = new Map();
     const cellSize = 50;
     
+    // Создаем массивы для хранения индексов объектов, которые нужно удалить
+    const enemiesToRemove = new Set();
+    const projectilesToRemove = new Set();
+    
     // Распределяем врагов по ячейкам
-    enemies.forEach(enemy => {
+    enemies.forEach((enemy, enemyIndex) => {
         const cellX = Math.floor(enemy.x / cellSize);
         const cellY = Math.floor(enemy.y / cellSize);
         const key = `${cellX},${cellY}`;
         if (!grid.has(key)) {
             grid.set(key, []);
         }
-        grid.get(key).push(enemy);
+        grid.get(key).push({enemy, enemyIndex});
     });
 
-    // Проверяем коллизии только с врагами в соседних ячейках
-    projectiles.forEach((proj, i) => {
+    // Проверяем коллизии
+    projectiles.forEach((proj, projIndex) => {
         const cellX = Math.floor(proj.x / cellSize);
         const cellY = Math.floor(proj.y / cellSize);
         
@@ -1077,24 +1081,37 @@ function checkCollisions() {
                 const cellEnemies = grid.get(key);
                 if (!cellEnemies) continue;
                 
-                cellEnemies.forEach((enemy, j) => {
+                cellEnemies.forEach(({enemy, enemyIndex}) => {
+                    if (enemiesToRemove.has(enemyIndex)) return; // Пропускаем уже помеченных к удалению
+                    
                     const dx = proj.x - enemy.x;
                     const dy = proj.y - enemy.y;
                     const distance = Math.sqrt(dx*dx + dy*dy);
                     
                     if(distance < enemy.radius + proj.radius && proj.color === enemy.color) {
-                        enemy.explode(proj); // Передаем снаряд в метод explode
-                        enemies.splice(j, 1);
-                        projectiles.splice(i, 1);
+                        enemy.explode(proj);
+                        enemiesToRemove.add(enemyIndex);
+                        projectilesToRemove.add(projIndex);
                         score.killed++;
-                        score.points += 100 * currentWave; // Начисляем очки с учетом номера волны
+                        score.points += 100 * currentWave;
                         score.hits++;
-                        score.killsThisWave++; // Увеличиваем счетчик убийств текущей волны
+                        score.killsThisWave++;
                     }
                 });
             }
         }
     });
+
+    // Удаляем помеченные объекты, начиная с больших индексов
+    const sortedEnemyIndices = Array.from(enemiesToRemove).sort((a, b) => b - a);
+    const sortedProjectileIndices = Array.from(projectilesToRemove).sort((a, b) => b - a);
+    
+    for (const index of sortedEnemyIndices) {
+        enemies.splice(index, 1);
+    }
+    for (const index of sortedProjectileIndices) {
+        projectiles.splice(index, 1);
+    }
 
     // Проверяем условие перехода на следующую волну
     if (score.killsThisWave >= waves[currentWave - 1].killsToNext) {
